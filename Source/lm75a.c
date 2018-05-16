@@ -220,9 +220,9 @@ void lm75a_temp_read_polling(void){
 		/*	if(motor.running_state!=M_IDLE)
 				break;
 		*/
-			lm35_t.temp_buffer[lm35_t.times]=Get_Adc_Average(ADC_Channel_2,100);      
+			lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature(B3470_C2);      
 			lm35_t.times++;                 //加1                                                          
-			if(lm35_t.times>4)
+			if(lm35_t.times>2)
 					lm35_t.mission_state=LM35_READ_FINISH;
 				
 			break;
@@ -234,7 +234,7 @@ void lm75a_temp_read_polling(void){
 			lm35_t.temp_all+=lm35_t.temp_buffer[i];
 		}
 		
-		lm35_t.temp_real=lm35_t.temp_all/lm35_t.times-3;  //采样温度求平均  -3 是为了矫正误差        temp_real 是真实温度
+		lm35_t.temp_real=lm35_t.temp_all/lm35_t.times;  //采样温度求平均  -3 是为了矫正误差        temp_real 是真实温度
 		
 			//处理温度在正常范围内渐变
 	  lm35_t.temp=temp_faded(lm35_t.temp_real,150);   //********调用温度渐变         temp  是调用渐变后的显示温度	

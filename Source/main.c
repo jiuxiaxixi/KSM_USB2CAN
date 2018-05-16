@@ -1,6 +1,36 @@
+/****************************************Copyright (c)****************************************************
+**                                	重庆科斯迈生物科技有限公司
+**                                    6500 试剂系统                    
+**																			@张校源
+**
+**--------------File Info---------------------------------------------------------------------------------
+** File Name:               main.c
+** Last modified Date:      2018-05-16
+** Last Version:            v1.0 
+** Description:             试剂盘主函数
+** 
+**--------------------------------------------------------------------------------------------------------
+** Created By:              张校源
+** Created date:            2017-04-09
+** Version:                 v1.0
+** Descriptions:            The original version
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             
+** Modified date:           
+** Version:                 
+** Description:             
+**
+*********************************************************************************************************/
 
+/*********************************************************************************************************
+** 是否启用串口调试功能
+*********************************************************************************************************/
+#define DEBUG 0
 
-/* Includes ------------------------------------------------------------------*/ 
+/*********************************************************************************************************
+	头文件
+*********************************************************************************************************/
 #include "usbd_cdc_core.h"
 #include "usbd_usr.h"
 #include "usbd_desc.h"
@@ -16,6 +46,7 @@
 #include "string.h"
 #include <stdio.h>
 #include "lm75a.h"
+#include "b3470.h"
 #include "one_dimension_code.h"
 #include "can.h"
 #include "MicroStepDriver.h" 
@@ -29,14 +60,15 @@
 #include "cooler.h"
 #include "adc.h"
 #include "mission.h"
-
+/*********************************************************************************************************
+ 全局变量
+*********************************************************************************************************/
 char USB_SendReady=0;
 extern  __IO uint8_t USB_StatusDataSended;
 extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
 extern __IO uint8_t DeviceConfigured;
-
 /* Create USART working buffer */
 char USART_Buffer[100] = "Hello via USART2 with TX DMA\n";
 
@@ -83,7 +115,7 @@ int main(void) {
 	cooler_init();
 	
 	//温度传感器初始化
-	Adc_Init();   
+	b3470_init();   
 	//初始步进电机走位数据到FLASH
 	//position_init_to_flash();
 	//步进电机初始化
@@ -94,33 +126,42 @@ int main(void) {
 	BUZZER_Init();
 	while (1) {          //无限循环
 		
+#if DEBUG
+	if(lmt.usb_tx_time < time)
+	{
+		sprintf(USART_Buffer,"temp = %d \r\n",b3470_get_temperature(B3470_C2));//字符串写入缓存
+		TM_USART_DMA_Send(USART1, (uint8_t *)USART_Buffer,15);//串口发送发送数据
+		lmt.usb_tx_time = time + 300;
+	}
+#else
+			//温度显示任务
+			LM75_mission();
+#endif
+
 		//蜂鸣器任务
 			BUZZER_mission_polling();
 		//电机走位任务
 			motor_move_polling();
-		//温度显示任务
-			LM75_mission();
+
 		//电机复位任务
 			motor_reset();
 		//电机振摇任务
 		  motor_shocking();
 		//屏幕时间同步任务
 			su_mission_polling();
-//FLASH参数偏置任务
+		//FLASH参数偏置任务
 			flash_mission_polling();
-//实际温度查询任务
+		//实际温度查询任务
 			lm75a_mission_polling();
-//LED动态提醒任务
+		//LED动态提醒任务
 			led_mission_polling();
-//ADC温度读取任务
+			//ADC温度读取任务
 			lm75a_temp_read_polling();
-//二维码扫描任务
+			//二维码扫描任务
 			one_dimension_code_mission_polling();
 			
-//制冷通断任务
-			//cooler_pwm_mission();
 			
-//电机抱死任务
+			//电机维护命令
 			motor_maintain_polling();
 			
 //通信部分	

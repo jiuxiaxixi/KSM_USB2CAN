@@ -5,21 +5,21 @@
 **
 **--------------File Info---------------------------------------------------------------------------------
 ** File Name:               b3470.c
-** Last modified Date:      2018-05-16
-** Last Version:            v1.0 
+** Last modified Date:      2018-05-18
+** Last Version:            v1.1
 ** Description:             热敏电阻NTC 温度传感器 B3470
 ** 
 **--------------------------------------------------------------------------------------------------------
 ** Created By:              张校源
-** Created date:            2018-04-09
+** Created date:            2018-05-16
 ** Version:                 v1.0
 ** Descriptions:            The original version
 **
 **--------------------------------------------------------------------------------------------------------
-** Modified by:             
-** Modified date:           
-** Version:                 
-** Description:             
+** Modified by:             张校源
+** Modified date:           2018-05-18
+** Version:                 v1.1
+** Description:             增加负温度读取(小数部分未校准)
 **
 *********************************************************************************************************/
 /*********************************************************************************************************
@@ -187,15 +187,16 @@ u16 adc_value_filter(u8 ch)
 ** Created by:          张校源
 ** Created Date:        2018-05-14
 *********************************************************************************************************/
-u16 adc_value_conv_temperature(u16 adc_value)
+int16_t adc_value_conv_temperature(u16 adc_value)
 {
-	u16 temp_h;
+	int16_t temp_h;
 	u16 temp_low;
 	for(u8 i=0;i<B3470_TEMP_RANGE; i++)
 	{
 		if(adc_value < table_B3470[i])
 		{
 			temp_h= (i - 22)*10;
+			//TODO 负温度小数部分校准
 			temp_low = (adc_value -table_B3470[i-1])*10/(table_B3470[i] -table_B3470[i-1]);
 			return temp_h + temp_low;
 		}
@@ -205,15 +206,15 @@ u16 adc_value_conv_temperature(u16 adc_value)
 
 /*********************************************************************************************************
 ** Function name:       get_temperature
-** Descriptions:        根据传递出来的参数查找表格
-** input parameters:    ADC 通道
+** Descriptions:        查询对应接口的温度传感器 
+** input parameters:    ADC 通道 （B3470_C3 ，B3470_C2）
 ** output parameters:   无
 ** Returned value:      温度
 ** Created by:          张校源
 ** Created Date:        2018-05-14
 *********************************************************************************************************/
 
-u16 b3470_get_temperature(u8 ch)
+int16_t b3470_get_temperature(u8 ch)
 {
 	return adc_value_conv_temperature(adc_value_filter(ch));
 }

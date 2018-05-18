@@ -5,8 +5,8 @@
 **
 **--------------File Info---------------------------------------------------------------------------------
 ** File Name:               main.c
-** Last modified Date:      2018-05-16
-** Last Version:            v1.0 
+** Last modified Date:      2018-05-18
+** Last Version:            v1.1
 ** Description:             试剂盘主函数
 ** 
 **--------------------------------------------------------------------------------------------------------
@@ -16,17 +16,15 @@
 ** Descriptions:            The original version
 **
 **--------------------------------------------------------------------------------------------------------
-** Modified by:             
-** Modified date:           
-** Version:                 
-** Description:             
+** Modified by:             张校源
+** Modified date:           2018-05-18
+** Version:                 v1.1
+** Description:             增加串口调试功能，并且在主函数中定义
+**													通过宏USART_DEBUG_ENABLE 打开串口调试功能 
+**													可以使用printf 函数 并在主函数中增加一个定时打印任务
 **
 *********************************************************************************************************/
 
-/*********************************************************************************************************
-** 是否启用串口调试功能
-*********************************************************************************************************/
-#define DEBUG 0
 
 /*********************************************************************************************************
 	头文件
@@ -37,7 +35,7 @@
 #include "config.h"
 #include "base_driver.h"
 #include "delay.h"
-#include "usart.h"
+
 #include "nand_driver.h"
 #define NAND_FLASH_TEST 0
 #include "tm_stm32f4_usart.h"
@@ -60,18 +58,40 @@
 #include "cooler.h"
 #include "adc.h"
 #include "mission.h"
+
+/*********************************************************************************************************
+** 是否启用串口调试功能
+*********************************************************************************************************/
+#define USART_DEBUG_ENABLE 1  //初始化串口功能
+
+#if USART_DEBUG_ENABLE
+#define DEBUG 1
+uint32_t uart_debug_time;
+#else
+#define DEBUG 0
+#endif
+
+#if DEBUG
+#include "usart.h"
+#define PRINTF(...)   printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
+#endif
+
+
 /*********************************************************************************************************
  全局变量
 *********************************************************************************************************/
-char USB_SendReady=0;
+char 		USB_SendReady=0;
 extern  __IO uint8_t USB_StatusDataSended;
 extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
 extern __IO uint8_t DeviceConfigured;
-/* Create USART working buffer */
-char USART_Buffer[100] = "Hello via USART2 with TX DMA\n";
 
+/*********************************************************************************************************
+ USB 高速工作模式
+*********************************************************************************************************/
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
   #if defined ( __ICCARM__ ) /*!< IAR Compiler */
     #pragma data_alignment=4   
@@ -80,6 +100,25 @@ char USART_Buffer[100] = "Hello via USART2 with TX DMA\n";
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
 
 
+
+/*********************************************************************************************************
+** Function name:       b3470_init
+** Descriptions:        串口300ms循环打印测试任务
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-18
+*********************************************************************************************************/
+void usart_debug_mission(void)
+{
+	if(uart_debug_time < time)
+	{
+		PRINTF("temp = %d \r\n",b3470_get_temperature(B3470_C2));//字符串写入缓存
+		uart_debug_time = time + 300;
+	}
+
+}
 
 int main(void) {
 	/* Initialize system */
@@ -91,10 +130,14 @@ int main(void) {
 	USBD_Init(&USB_OTG_dev,USB_OTG_HS_CORE_ID,&USR_desc,&USBD_CDC_cb,&USR_cb);
 	//can初始化
 	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,24,0);//CAN初始化环回模式,波特率125Kbps
-	
+#if USART_DEBUG_ENABLE
+	//普通初始化
+	USART_Configuration(115200);
+#else
 	//DMA串口初始化
 	TM_USART_Init(USART1, TM_USART_PinsPack_2, 9600);
 	TM_USART_DMA_Init(USART1);
+#endif
 	
 	//滴答时钟初始化
 	SysTick_Config(SystemCoreClock/1000);
@@ -126,13 +169,8 @@ int main(void) {
 	BUZZER_Init();
 	while (1) {          //无限循环
 		
-#if DEBUG
-	if(lmt.usb_tx_time < time)
-	{
-		sprintf(USART_Buffer,"temp = %d \r\n",b3470_get_temperature(B3470_C2));//字符串写入缓存
-		TM_USART_DMA_Send(USART1, (uint8_t *)USART_Buffer,15);//串口发送发送数据
-		lmt.usb_tx_time = time + 300;
-	}
+#if USART_DEBUG_ENABLE
+		usart_debug_mission();
 #else
 			//温度显示任务
 			LM75_mission();
@@ -159,8 +197,6 @@ int main(void) {
 			lm75a_temp_read_polling();
 			//二维码扫描任务
 			one_dimension_code_mission_polling();
-			
-			
 			//电机维护命令
 			motor_maintain_polling();
 			

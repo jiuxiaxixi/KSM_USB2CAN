@@ -62,7 +62,7 @@
 /*********************************************************************************************************
 ** 是否启用串口调试功能
 *********************************************************************************************************/
-#define USART_DEBUG_ENABLE 1  //初始化串口功能
+#define USART_DEBUG_ENABLE 0  //初始化串口功能
 
 #if USART_DEBUG_ENABLE
 #define DEBUG 1
@@ -100,7 +100,7 @@ extern __IO uint8_t DeviceConfigured;
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
 
 
-
+#if USART_DEBUG_ENABLE
 /*********************************************************************************************************
 ** Function name:       b3470_init
 ** Descriptions:        串口300ms循环打印测试任务
@@ -114,11 +114,14 @@ void usart_debug_mission(void)
 {
 	if(uart_debug_time < time)
 	{
-		PRINTF("temp = %d \r\n",b3470_get_temperature(B3470_C2));//字符串写入缓存
+		PRINTF("temp = %d \r\n",b3470_get_temperature_offset(B3470_C3));//字符串写入缓存
 		uart_debug_time = time + 300;
 	}
 
 }
+#endif
+
+
 
 int main(void) {
 	/* Initialize system */

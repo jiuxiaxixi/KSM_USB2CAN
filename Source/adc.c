@@ -97,7 +97,6 @@ u16 Get_Adc_Average(u8 ch,u8 times)
 	u32 temp_val=0;
 	u16 temp[200];
 	u8 t;
-	u8 i;
 	for(t=0;t<times;t++)
 	{
 		//temp_val+=Get_Adc(ch);

@@ -1,31 +1,68 @@
+/****************************************Copyright (c)****************************************************
+**                                	重庆科斯迈生物科技有限公司
+**                                    6500 试剂系统                    
+**																			@张校源
+**
+**--------------File Info---------------------------------------------------------------------------------
+** File Name:               stmflash.c
+** Last modified Date:      2018-05-19
+** Last Version:            v1.1
+** Description:             热敏电阻NTC 温度传感器 B3470
+** 
+**--------------------------------------------------------------------------------------------------------
+** Created By:              张校源
+** Created date:            2017-05-16
+** Version:                 v1.0
+** Descriptions:            The original version
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-18
+** Version:                 v1.1
+** Description:             增加温度校准参数
+**
+*********************************************************************************************************/
+/*********************************************************************************************************
+** 是否启用串口调试功能
+*********************************************************************************************************/
+#define DEBUG 0
+#if DEBUG
+#include "usart.h"
+#define PRINTF(...)   printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
+#endif
+
 #include "stmflash.h"
 #include "can.h"
 #include "MSD_test.h"  
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F407开发板
-//STM32内部FLASH读写 驱动代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/9
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 
-flash_mission_t fmt;
-                                                                                     //STM32内部FLASH读写 驱动代码	   
+/*********************************************************************************************************
+ FLASH 参数全局变量
+*********************************************************************************************************/
+flash_mission_t fmt; //STM32内部FLASH读写 驱动代码	   
  
-//读取指定地址的半字(16位数据) 
-//faddr:读地址 
-//返回值:对应数据.
+/*********************************************************************************************************
+** Function name:       STMFLASH_ReadWord
+** Descriptions:        读取指定地址的半字(16位数据) 
+** input parameters:    faddr:读地址 
+** output parameters:   0
+** Returned value:      对应数据.
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 u32 STMFLASH_ReadWord(u32 faddr)
 {
 	return *(vu32*)faddr; 
 }  
-//获取某个地址所在的flash扇区
-//addr:flash地址
-//返回值:0~11,即addr所在的扇区
+/*********************************************************************************************************
+** Function name:       STMFLASH_GetFlashSector
+** Descriptions:        获取某个地址所在的flash扇区
+** input parameters:    flash地址
+** output parameters:   0
+** Returned value:      0~11,即addr所在的扇区
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 uint16_t STMFLASH_GetFlashSector(u32 addr)
 {
 	if(addr<ADDR_FLASH_SECTOR_1)return FLASH_Sector_0;
@@ -41,16 +78,24 @@ uint16_t STMFLASH_GetFlashSector(u32 addr)
 	else if(addr<ADDR_FLASH_SECTOR_11)return FLASH_Sector_10; 
 	return FLASH_Sector_11;	
 }
-//从指定地址开始写入指定长度的数据
-//特别注意:因为STM32F4的扇区实在太大,没办法本地保存扇区数据,所以本函数
-//         写地址如果非0XFF,那么会先擦除整个扇区且不保存扇区数据.所以
-//         写非0XFF的地址,将导致整个扇区数据丢失.建议写之前确保扇区里
-//         没有重要数据,最好是整个扇区先擦除了,然后慢慢往后写. 
-//该函数对OTP区域也有效!可以用来写OTP区!
-//OTP区域地址范围:0X1FFF7800~0X1FFF7A0F
-//WriteAddr:起始地址(此地址必须为4的倍数!!)
-//pBuffer:数据指针
-//NumToWrite:字(32位)数(就是要写入的32位数据的个数.) 
+
+/*********************************************************************************************************
+** Function name:       STMFLASH_Read
+** Descriptions:        从指定地址开始写入指定长度的数据
+** 特别注意:因为STM32F4的扇区实在太大,没办法本地保存扇区数据,所以本函数
+**         写地址如果非0XFF,那么会先擦除整个扇区且不保存扇区数据.所以
+**         写非0XFF的地址,将导致整个扇区数据丢失.建议写之前确保扇区里
+**         没有重要数据,最好是整个扇区先擦除了,然后慢慢往后写. 
+** 				 该函数对OTP区域也有效!可以用来写OTP区!
+** 				 OTP区域地址范围:0X1FFF7800~0X1FFF7A0F
+** input parameters:    WriteAddr:起始地址(此地址必须为4的倍数!!) 
+**											pBuffer:数据指针 
+**											NumToWrite:字(32位)数(就是要写入的32位数据的个数.) 
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 void STMFLASH_Write(u32 WriteAddr,u32 *pBuffer,u32 NumToWrite)	
 { 
   FLASH_Status status = FLASH_COMPLETE;
@@ -89,10 +134,16 @@ void STMFLASH_Write(u32 WriteAddr,u32 *pBuffer,u32 NumToWrite)
 	FLASH_Lock();//上锁
 } 
 
-//从指定地址开始读出指定长度的数据
-//ReadAddr:起始地址
-//pBuffer:数据指针
-//NumToRead:字(4位)数
+
+/*********************************************************************************************************
+** Function name:       STMFLASH_Read
+** Descriptions:        从指定地址开始读出指定长度的数据
+** input parameters:    ReadAddr:起始地址 pBuffer:数据指针 NumToRead:字(4位)数
+** output parameters:   pBuffer:数据指针
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 void STMFLASH_Read(u32 ReadAddr,u32 *pBuffer,u32 NumToRead)   	
 {
 	u32 i;
@@ -104,10 +155,17 @@ void STMFLASH_Read(u32 ReadAddr,u32 *pBuffer,u32 NumToRead)
 }
 
 
-
-
+/*********************************************************************************************************
+** Function name:       flash_mission_polling
+** Descriptions:        flash 参数任务
+** input parameters:    mission.c 中接受到can 的指令
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 void flash_mission_polling(){
-	static u8 flash_u8_buf[32];
+	static u8 flash_u8_buf[FLASH_PARA_LEN_8];
 	static u8	upload[2];
 	switch(fmt.mission_state){
 	
@@ -120,13 +178,13 @@ void flash_mission_polling(){
 	
 	case FLASH_WRITE:    //写入内存
 		
-		STMFLASH_Write(FLASH_SAVE_ADDR,(u32*)fmt.buf,6);
+		STMFLASH_Write(FLASH_SAVE_ADDR,(u32*)fmt.buf,FLASH_PARA_LEN_32);
 		fmt.mission_state=FLASH_WRITE_SUCCEE;
 	
 	break;
 	
 	case FLASH_READ:   //读取内存
-		stmflash_read_reverse(flash_u8_buf,6);
+		stmflash_read_reverse(flash_u8_buf,FLASH_PARA_LEN_32);
 		fmt.mission_state=FLASH_READ_SUCCEE;
 	break;
 	
@@ -141,6 +199,8 @@ void flash_mission_polling(){
 	
 	case FLASH_READ_SUCCEE:
 		//MSB AND LSB problem
+		if(fmt.command_index*2+1 > FLASH_PARA_LEN_8)
+			break;
 		upload[0]=flash_u8_buf[fmt.command_index*2];
 		upload[1]=flash_u8_buf[fmt.command_index*2+1];
 		
@@ -158,15 +218,20 @@ void flash_mission_polling(){
 	
 	case FLASH_FAILE:
 		break;
-	
-	
-	
-}
-	
+	}
 }
 
+/*********************************************************************************************************
+** Function name:       flash_init
+** Descriptions:        flash 参数初始化 从FLASH_SAVE_ADDR读取数据到 全局变量
+** input parameters:    0
+** output parameters:   fmt.buf
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 void flash_init(){
-	STMFLASH_Read(FLASH_SAVE_ADDR,(u32 *)fmt.buf,6);
+	STMFLASH_Read(FLASH_SAVE_ADDR,(u32 *)fmt.buf,FLASH_PARA_LEN_32);
 	fmt.newdata=1;
 }
 
@@ -178,7 +243,18 @@ void stmflash_read_reverse(u8 *pBuffer,u32 NumToRead){
 		*(pBuffer+i+1)=temp[i];
 	}
 }
-
+/*********************************************************************************************************
+** Function name:       offset_calc
+** Descriptions:        偏移量计算  偏移值 = 理论值 - 实际值
+**											motor.offset 计算出来的偏移值
+**											fmt.buf			 FLASH写入的实际值
+**											angle				 理论值
+** input parameters:    0
+** output parameters:   fmt.buf
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
 void offset_calc(void){			
 	motor.offset[1]=fmt.buf[1];
 	motor.offset[2]=fmt.buf[2]-angle(1,1,1);
@@ -190,10 +266,23 @@ void offset_calc(void){
 	motor.offset[8]=fmt.buf[8]-angle(3,1,1);
 	motor.offset[9]=fmt.buf[9]-angle(3,1,2);
 	motor.offset[10]=fmt.buf[10]-angle(3,1,3);
+	fmt.temperature_offset_c2 = fmt.buf[FLASH_TEMP1_OFFSET_POS]-b3470_get_temperature(B3470_C2);
+	fmt.temperature_offset_c3 = fmt.buf[FLASH_TEMP2_OFFSET_POS]-b3470_get_temperature(B3470_C2);
+	
+	PRINTF("fmt.temperature_offset_c2 %d fmt.temperature_offset_c3 %d\r\n",fmt.temperature_offset_c2,fmt.temperature_offset_c3);
 }
 
-//把电机要走的脉冲数写入内存
-void position_init_to_flash(void){
+/*********************************************************************************************************
+** Function name:       position_init_to_flash
+** Descriptions:        把电机要走的脉冲数写入内存 测试用
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2017-05-01
+*********************************************************************************************************/
+void position_init_to_flash(void)
+{
 	fmt.buf[1]=0;
 	fmt.buf[2]=step_to_move_calc(1,1,1);
 	fmt.buf[3]=step_to_move_calc(1,1,2);
@@ -204,13 +293,33 @@ void position_init_to_flash(void){
 	fmt.buf[8]=step_to_move_calc(3,1,1);
 	fmt.buf[9]=step_to_move_calc(3,1,2);
 	fmt.buf[10]=step_to_move_calc(3,1,3);
-	
 	fmt.current_mission=FLASH_MISSION_WRITE;
 	fmt.mission_state=FLASH_WRITE;
 	fmt.newdata=1;
 }
 
-
+/*********************************************************************************************************
+** Function name:       flash_get_para
+** Descriptions:        获取对应设备的偏移参数
+** input parameters:    B3470_C2 B3470_C3
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-20
+*********************************************************************************************************/
+int16_t flash_get_para(uint8_t device)
+{
+	switch(device)
+	{
+		case B3470_C2:
+			return fmt.temperature_offset_c2;
+		case B3470_C3:
+			return fmt.temperature_offset_c3;
+		default:
+			PRINTF("fmt got no para of %d",device);
+			return 0;
+	}
+}
 
 
 

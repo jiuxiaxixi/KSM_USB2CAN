@@ -1,5 +1,13 @@
 #include "mission.h"
 
+#define DEBUG 0
+#if DEBUG
+#include "usart.h"
+#define PRINTF(...)   printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
+#endif
+
 extern  __IO uint8_t USB_StatusDataSended;
 extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];   //发缓存
@@ -100,7 +108,7 @@ void mission_polling(void){
 				break;
 				
 				case MOTOR_DEBUG:          //  10 05     修改电机调试  参数
-					
+					PRINTF("MOTOR_DEBUG para %d  value%d\r\n",USB_Rx_Buffer[9]-1 , (USB_Rx_Buffer[12]<<8)|(USB_Rx_Buffer[13]<<0));
 					fmt.buf[USB_Rx_Buffer[9]-1]=(USB_Rx_Buffer[12]<<8)|(USB_Rx_Buffer[13]<<0);
 					fmt.current_mission=MOTOR_DEBUG;
 					fmt.mission_state=MEMORY_WIRTE_SUCCEE;
@@ -209,7 +217,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 上传版本号
-					sprintf(version,"1.5TE");
+					sprintf(version,"1.62B");
 					action_value_send_none_80((u8 *)version,5,VERSION_UPLOAD);
 				break;
 				

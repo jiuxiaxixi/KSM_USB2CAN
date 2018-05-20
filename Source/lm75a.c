@@ -220,7 +220,7 @@ void lm75a_temp_read_polling(void){
 		/*	if(motor.running_state!=M_IDLE)
 				break;
 		*/
-			lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature(B3470_C2);      
+			lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature_offset(B3470_C2);      
 			lm35_t.times++;                 //¼Ó1                                                          
 			if(lm35_t.times>2)
 					lm35_t.mission_state=LM35_READ_FINISH;

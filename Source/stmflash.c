@@ -266,10 +266,7 @@ void offset_calc(void){
 	motor.offset[8]=fmt.buf[8]-angle(3,1,1);
 	motor.offset[9]=fmt.buf[9]-angle(3,1,2);
 	motor.offset[10]=fmt.buf[10]-angle(3,1,3);
-	fmt.temperature_offset_c2 = fmt.buf[FLASH_TEMP1_OFFSET_POS]-b3470_get_temperature(B3470_C2);
-	fmt.temperature_offset_c3 = fmt.buf[FLASH_TEMP2_OFFSET_POS]-b3470_get_temperature(B3470_C2);
-	
-	PRINTF("fmt.temperature_offset_c2 %d fmt.temperature_offset_c3 %d\r\n",fmt.temperature_offset_c2,fmt.temperature_offset_c3);
+	//PRINTF("fmt.temperature_offset_c2 %d fmt.temperature_offset_c3 %d\r\n",fmt.temperature_offset_c2,fmt.temperature_offset_c3);
 }
 
 /*********************************************************************************************************
@@ -312,9 +309,17 @@ int16_t flash_get_para(uint8_t device)
 	switch(device)
 	{
 		case B3470_C2:
-			return fmt.temperature_offset_c2;
+			return fmt.buf[FLASH_TEMP1_OFFSET_POS];
 		case B3470_C3:
-			return fmt.temperature_offset_c3;
+			return fmt.buf[FLASH_TEMP2_OFFSET_POS];
+		case FLASH_C3_ZL_HIGH:
+			return fmt.buf[FLASH_C3_ZL_HIGH];
+		case FLASH_C3_ZL_LOW:
+			return fmt.buf[FLASH_C3_ZL_LOW];
+		case FLASH_C2_ZL_HIGH:
+			return fmt.buf[FLASH_C2_ZL_HIGH];
+		case FLASH_C2_ZL_LOW:
+			return fmt.buf[FLASH_C2_ZL_LOW];		
 		default:
 			PRINTF("fmt got no para of %d",device);
 			return 0;

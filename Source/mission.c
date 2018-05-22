@@ -151,7 +151,7 @@ void mission_polling(void){
 				
 				case TEMP_DISPLAY:                  // 13  Œ¬∂»œ‘ æ 
 					if(usart_state==0)
-					LM75t.mission_state=LM75_START;
+					LM75t.mission_state=SCREEN_DIS_START;
 					else
 						mission_success_send(TEMP_DISPLAY);
 			break;

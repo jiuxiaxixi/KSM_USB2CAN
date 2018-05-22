@@ -37,8 +37,12 @@
 #define FLASH_PARA_LEN_8					 (FLASH_PARA_NUM*2)
 #define FLASH_TEMP1_OFFSET_POS		 11
 #define FLASH_TEMP2_OFFSET_POS		 12
-#define FLASH_TEMP_STATUS			 		 15
-#define FLASH_PWOER_STATUS			 	 16
+#define FLASH_C3_ZL_HIGH		 			 13
+#define FLASH_C3_ZL_LOW	 			 		 14
+#define FLASH_C2_ZL_HIGH		 			 15
+#define FLASH_C2_ZL_LOW	 			 		 16
+#define FLASH_TEMP_STATUS			 		 17
+#define FLASH_PWOER_STATUS			 	 18
 
 /*********************************************************************************************************
  硬件相关宏定义
@@ -95,8 +99,6 @@ typedef struct {
   u8		newdata;         	
 	u8 		command_index;
   int16_t	buf[FLASH_PARA_NUM];								//电平转换时间
-	int16_t	temperature_offset_c2;
-	int16_t	temperature_offset_c3;
 }flash_mission_t;
 
 extern flash_mission_t fmt;

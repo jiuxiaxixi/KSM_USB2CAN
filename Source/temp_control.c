@@ -1,6 +1,46 @@
+/****************************************Copyright (c)****************************************************
+**                                	ÖØÇì¿ÆË¹ÂõÉúÎï¿Æ¼¼ÓĞÏŞ¹«Ë¾
+**                                    6500 ÊÔ¼ÁÏµÍ³                    
+**																			@ÕÅĞ£Ô´
+**
+**--------------File Info---------------------------------------------------------------------------------
+** File Name:               temp_control.c
+** Last modified Date:      2018-05-22
+** Last Version:            v1.1
+** Description:             
+** 
+**--------------------------------------------------------------------------------------------------------
+** Created By:              ÕÅĞ£Ô´
+** Created date:            2017-05-16
+** Version:                 v1.0
+** Descriptions:            ÊÔ¼ÁÅÌÎÂ¶È¿ØÖÆ³ÌĞò
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             ÕÅĞ£Ô´
+** Modified date:           2018-05-22
+** Version:                 v1.1
+** Description:             
+**
+*********************************************************************************************************/
+/*********************************************************************************************************
+** ÊÇ·ñÆôÓÃ´®¿Úµ÷ÊÔ¹¦ÄÜ
+*********************************************************************************************************/
+#define DEBUG 0
+#if DEBUG
+#include "usart.h"
+#define PRINTF(...)   printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
+#endif
+/*********************************************************************************************************
+	Í·ÎÄ¼ş
+*********************************************************************************************************/
 #include "cooler.h"
 #include "BUZZER.h"
 #include "temp_control.h"	
+/*********************************************************************************************************
+	È«¾Ö±äÁ¿
+*********************************************************************************************************/
 extern u32 time;
 u32 lm75a_time=0;
 u8	lm75_status=0;
@@ -13,9 +53,16 @@ char LM75_rx_buffer[20];
 LM75_usart_t LM75t;
 volatile lm35_temp_t lm35_t;
 
-	
+/*********************************************************************************************************
+** Function name:       lm75a_temp_read_polling
+** Descriptions:        ÎÂ¶È¶ÁÈ¡ÈÎÎñ ÖÜÆÚĞÔ¶ÁÈ¡
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          ÕÅĞ£Ô´
+** Created Date:        2018-05-22
+*********************************************************************************************************/
 void lm75a_temp_read_polling(void){
-//	u32 temp_val;
 	switch(lm35_t.mission_state){          //¸ù¾İ ÈÎÎñ×´Ì¬ºÅÖ´ĞĞ
 		
 		case LM35_READ_IDLE:
@@ -23,36 +70,35 @@ void lm75a_temp_read_polling(void){
 			lm35_t.mission_state=LM35_READ_START;
 				lm35_t.times=0;
 				lm35_t.temp_all=0;
-				//StartAdc1OscSam();
 			}
 			break;
 			
 		case LM35_READ_START:                   //¿ªÊ¼¶ÁÈ¡ÎÂ¶È
-		/*	if(motor.running_state!=M_IDLE)
-				break;
-		*/
+			
 #if USE_LM35
 		lm35_t.temp_buffer[lm35_t.times]=Get_Adc_Average(ADC_Channel_2,100); 
 #else
-		lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature_offset(B3470_C2); 
+		lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature_offset(B3470_C3); 
 #endif 		
 			lm35_t.times++;                 //¼Ó1                                                          
-			if(lm35_t.times>5)
+			if(lm35_t.times>2)
 					lm35_t.mission_state=LM35_READ_FINISH;
-				
 			break;
 		
 		case LM35_READ_FINISH:                   //ÎÂ¶È¶ÁÈëºóµÄ´¦Àí
-			
 		for(u8 i=0;i<lm35_t.times;i++){
-			//lm35_t.temp+=lm35_t.temp_buffer[i];
 			lm35_t.temp_all+=lm35_t.temp_buffer[i];
 		}
 		
 		lm35_t.temp_real=lm35_t.temp_all/lm35_t.times;  //²ÉÑùÎÂ¶ÈÇóÆ½¾ù  -3 ÊÇÎªÁË½ÃÕıÎó²î        temp_real ÊÇÕæÊµÎÂ¶È
-		
+		//Ö»ÓĞLM35 ²Å½øĞĞÎÂ¶È½¥±ä
+#if USE_LM35
+		lm35_t.temp=temp_faded(lm35_t.temp_real,150);   //********µ÷ÓÃÎÂ¶È½¥±ä         temp  ÊÇµ÷ÓÃ½¥±äºóµÄÏÔÊ¾ÎÂ¶È	
+#else
+		lm35_t.temp=lm35_t.temp_real;
+#endif 	
 			//´¦ÀíÎÂ¶ÈÔÚÕı³£·¶Î§ÄÚ½¥±ä
-	  lm35_t.temp=temp_faded(lm35_t.temp_real,150);   //********µ÷ÓÃÎÂ¶È½¥±ä         temp  ÊÇµ÷ÓÃ½¥±äºóµÄÏÔÊ¾ÎÂ¶È	
+	  
 
 /*		if(75<lm35_t.temp_real<=80)
 			 lm35_t.temp-=5;
@@ -61,35 +107,83 @@ void lm75a_temp_read_polling(void){
 */
 		
 		lm35_t.mission_state=LM35_READ_IDLE;
-		lm35_t.waitime=time+10000;
+		lm35_t.waitime=time+1000;
 	
 		
-		if(lm35_t.temp_real<70){             //¸ù¾İÎÂ¶ÈÑ¡Ôñ  ·äÃùÆ÷ ±¨¾¯×´Ì¬
-		lm35_t.temp_alarm_state=1;
+		if(lm35_t.temp_real<70)
+		{             //¸ù¾İÎÂ¶ÈÑ¡Ôñ  ·äÃùÆ÷ ±¨¾¯×´Ì¬
+			 lm35_t.temp_alarm_state=1;
 		}
 		
 		if(lm35_t.temp_alarm_state==1)
-		if(lm35_t.temp_real>150){
+		if(lm35_t.temp_real>150)
+		{
 			buzzer_mission(MODE_THREE);
 			lm35_t.temp_alarm_state=0;
 		}
 		
 		if(time>lm35_t.close_inter_fan_time && lm35_t.close_inter_fan_enable)   //ÄÚ²¿·çÉÈ¹Ø±Õ±êÖ¾ ¿ÉÓÃ  ÇÒ Ê±¼ä¹ıÁË60S   ¹Ø±ÕÄÚ²¿·çÉÈ
 			close_inter_fan();
-		
-		if(lm35_t.cooler_function){    //¿ª¹ØÖÆÀäÌõ¼ş
-			if(lm35_t.temp_real<ZL_WD_L){
+#if !USE_LM35
+		if(lm35_t.cooler_function)
+		{    //¿ª¹ØÖÆÀäÌõ¼ş
+#if C3_DIPALY_ONLY
+			if(b3470_get_temperature_offset(B3470_C2)<flash_get_para(FLASH_C2_ZL_LOW))
+			{
+				PRINTF("¹Ø±ÕÖÆÀäC2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_off();
 				lm35_t.close_inter_fan_time=time+60000;  //ÑÓÊ±60S
 				lm35_t.close_inter_fan_enable =1;        //¹Ø±ÕÄÚ²¿·çÉÈ±êÖ¾¿ÉÓÃ
 				//ÉèÖÃÊ±¼äÑÓÊ±¹Ø±Õ·çÉÈ
 				
 			}
-			if(lm35_t.temp_real>ZL_WD_H){
+			if(b3470_get_temperature_offset(B3470_C2)>flash_get_para(FLASH_C2_ZL_HIGH))
+			{
+				PRINTF("¿ªÆôÖÆÀäC2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_HIGH));
+				cooler_on();
+				lm35_t.close_inter_fan_enable=0;     //¹Ø±ÕÄÚ²¿·çÉÈ±êÖ¾Îª²»¿É¹Ø
+			}
+#else 
+			if(lm35_t.temp_real<flash_get_para(FLASH_C3_ZL_LOW))
+			{
+				
+				//ÉèÖÃÊ±¼äÑÓÊ±¹Ø±Õ·çÉÈ
+				PRINTF("C3¹Ø±ÕÎÂ¶È\r\n");
+				lm35_t.c3_control_cooler = 0;
+				cooler_off();
+				lm35_t.close_inter_fan_time=time+60000;  //ÑÓÊ±60S
+				lm35_t.close_inter_fan_enable =1;        //¹Ø±ÕÄÚ²¿·çÉÈ±êÖ¾¿ÉÓÃ
+				
+			}
+			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH))
+			{
+				PRINTF("C3¿ªÆôÎÂ¶È\r\n");
+				lm35_t.c3_control_cooler = 1;
+			}
+#endif
+		}
+		if(lm35_t.c3_control_cooler)
+		{
+			if(b3470_get_temperature_offset(B3470_C2)<flash_get_para(FLASH_C2_ZL_LOW))
+			{
+				PRINTF("¹Ø±ÕÖÆÀäC2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
+				cooler_off();
+				lm35_t.close_inter_fan_time=time+60000;  //ÑÓÊ±60S
+				lm35_t.close_inter_fan_enable =1;        //¹Ø±ÕÄÚ²¿·çÉÈ±êÖ¾¿ÉÓÃ
+				//ÉèÖÃÊ±¼äÑÓÊ±¹Ø±Õ·çÉÈ
+				
+			}
+			if(b3470_get_temperature_offset(B3470_C2)>flash_get_para(FLASH_C2_ZL_HIGH))
+			{
+				PRINTF("¹Ø±ÕÖÆÀäC2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_on();
 				lm35_t.close_inter_fan_enable=0;     //¹Ø±ÕÄÚ²¿·çÉÈ±êÖ¾Îª²»¿É¹Ø
 			}
 		}
+#endif
+		
+		
+		
 		break;
 	}
 	
@@ -140,24 +234,24 @@ u16 temp_faded(u16 temp , u16 max_temp){   //ÎÂ¶È½¥±ä³ÌĞò£¨²éÑ¯ÎÂ¶ÈÊ±½ÓÊÕµ½ÕæÊµÎ
 
 
 // *************************** ÎÂ¶ÈÏÔÊ¾ÆÁÈÎÎñ***************************//
-void LM75_mission(void){
+void temp_display_mission(void){
 	float temp;
 	u8 length=10;
 	switch(LM75t.mission_state){
 		
-		case LM75T_IDLE:
+		case SCREEN_DIS_IDLE:
 			if(usart_state==0)
 				 break;
 					
 			if(time>=LM75t.periodtime && sut.mission_state == SCREEN_IDLE)    //ÏÔÊ¾ÆÁ¿ÕÏĞÅĞ¶Ï
-					LM75t.mission_state=LM75T_PENDING;	
+					LM75t.mission_state=SCREEN_DIS_PENDING;	
 			break;
 					
 			
 			
 			
 			
-		case LM75_START:
+		case SCREEN_DIS_START:
 			
 		if(sut.mission_state!=SCREEN_IDLE)
 			break;
@@ -177,7 +271,7 @@ void LM75_mission(void){
 				}
 
 				 
-					LM75t.mission_state=LM75_START_CHECK;  //¼ì²éÊÇ·ñ¿ªÊ¼¹¤×÷
+					LM75t.mission_state=SCREEN_DIS_START_CHECK;  //¼ì²éÊÇ·ñ¿ªÊ¼¹¤×÷
 					LM75t.timeout=time+200;
 				//LM75t.mission_state=LM75T_IDLE;
 		break;
@@ -186,7 +280,7 @@ void LM75_mission(void){
 				
 				
 				
-		case  LM75_START_CHECK:     //¼ì²é×´Ì¬
+		case  SCREEN_DIS_START_CHECK:     //¼ì²é×´Ì¬
 					if(sut.mission_state!=SCREEN_IDLE)
 							break;
 				
@@ -197,17 +291,17 @@ void LM75_mission(void){
 					
 					if(LM75t.retry_count>3){
 						mission_failed_send(TEMP_DISPLAY);  //ÖØÊÔ´ÎÊı³¬¹ı3´Î£¬±¨Ê§°Ü
-						LM75t.mission_state=LM75T_IDLE;
+						LM75t.mission_state=SCREEN_DIS_IDLE;
 						LM75t.retry_count=0;
 					}
 					
-							LM75t.mission_state=LM75_START;
+							LM75t.mission_state=SCREEN_DIS_START;
 					break;
 				}
 				
 				if(TM_USART_Gets(USART1,LM75_rx_buffer,5)){//Èç¹ûÊÕµ½·µ»ØµÄÈ·ÈÏÖ¡£¬±¨ÏÔÊ¾³É¹¦
 					if(LM75_rx_buffer[0]==LM75_ACK){
-						LM75t.mission_state=LM75T_IDLE;
+						LM75t.mission_state=SCREEN_DIS_IDLE;
 						usart_state=1;              //ÔÊĞí´«ÊäÊı¾İ
 						mission_success_send(TEMP_DISPLAY);
 				}
@@ -217,7 +311,7 @@ void LM75_mission(void){
 		
 			
 			
-		case LM75T_PENDING:
+		case SCREEN_DIS_PENDING:
 			    temp=lm35_t.temp/10;
 					if(temp>12){
 			    LM75t.rank=3;  //ºìÉ«
@@ -230,13 +324,13 @@ void LM75_mission(void){
 					LM75t.rank=1;                     //???????????????????????????????????????????  Ä¿Ç°ÓÉÆÁÄ»×Ô¼ºÅĞ¶Ï
 					LM75t.Integred=lm35_t.temp/10;       //ÎÂ¶ÈÕûÊıÎ»×ª»»
 				  LM75t.decide=lm35_t.temp%10;         //ÎÂ¶ÈĞ¡ÊıÎ»×ª»»
-		      LM75t.mission_state=LM75T_QUERY;
+		      LM75t.mission_state=SCREEN_DIS_QUERY;
 					LM75t.waitime=time+LM75WAITIME;
 					LM75t.index=1;
 			break;
 					
 					
-		case LM75T_QUERY:  //¶¨Ê±·¢ËÍÎÂ¶È
+		case SCREEN_DIS_QUERY:  //¶¨Ê±·¢ËÍÎÂ¶È
 			if(sut.mission_state != SCREEN_IDLE)
 				break;
 		 if(time>LM75t.waitime)
@@ -244,19 +338,19 @@ void LM75_mission(void){
 				TM_USART_DMA_Send(USART1, (uint8_t *)LM75_tx_buffer,LM75_parpare_buffer());
 			//set timer
 				LM75t.timeout=time+LM75_TIMEOUT;//ÉèÖÃ³¬Ê±Ê±¼ä
-				LM75t.mission_state=LM75T_POLLOING;
+				LM75t.mission_state=SCREEN_DIS_POLLOING;
 		 }
 			break;
 		
-		case LM75T_POLLOING:
+		case SCREEN_DIS_POLLOING:
 			if(time>LM75t.timeout){//µ¥Æ¬»ú·¢ËÍ³öÈ¥ºóÃ»ÓĞÊÕµ½Ó¦´ğ
 				LM75t.retry_count++;
 				
 				if(LM75t.retry_count>LM75_MAX_RETRY){
-					LM75t.mission_state=LM75T_FAILED;
+					LM75t.mission_state=SCREEN_DIS_FAILED;
 					break;
 				}
-				LM75t.mission_state=LM75T_PENDING;//²»µ½5´Î¾ÍÔÚÕâ¸ö×´Ì¬²éÑ¯ÊÇ·ñ³¬Ê±5´Î
+				LM75t.mission_state=SCREEN_DIS_PENDING;//²»µ½5´Î¾ÍÔÚÕâ¸ö×´Ì¬²éÑ¯ÊÇ·ñ³¬Ê±5´Î
 				break;
 			}
 				
@@ -265,30 +359,30 @@ void LM75_mission(void){
 						LM75t.index++;
 						LM75t.retry_count=0;
 					  LM75t.waitime=time+LM75WAITIME;
-						LM75t.mission_state=LM75T_QUERY;
+						LM75t.mission_state=SCREEN_DIS_QUERY;
 				}
 			}
 				if(LM75t.index>=3){
-					LM75t.mission_state=LM75T_SUCCESS;
+					LM75t.mission_state=SCREEN_DIS_SUCCESS;
 				}
 					break;
 				
-		case LM75T_FAILED:
+		case SCREEN_DIS_FAILED:
 			LM75t.index=0;
-			LM75t.mission_state=LM75T_IDLE;
+			LM75t.mission_state=SCREEN_DIS_IDLE;
 			LM75t.retry_count=0;
 		  LM75t.periodtime=time+LM75PRED_TIME;
 			break;
 		
-		case LM75T_SUCCESS:
+		case SCREEN_DIS_SUCCESS:
 				LM75t.index=0;
-				LM75t.mission_state=LM75T_IDLE;
+				LM75t.mission_state=SCREEN_DIS_IDLE;
 				LM75t.retry_count=0;
 		    LM75t.periodtime=time+LM75PRED_TIME;
 			break;
 		
 		default:
-				LM75t.mission_state=LM75T_IDLE;
+				LM75t.mission_state=SCREEN_DIS_IDLE;
 		break;
 			}
 	}
@@ -366,6 +460,14 @@ void lm75a_mission_polling(void){
 				temp_frame[2]=temp_int>>0;
 				mission_state[TEMP_QUERY]=0x80;
 				one_can_frame_send((u8 *)temp_frame,3,TEMP_QUERY);
+			
+				temp_int=b3470_get_temperature_offset(B3470_C2);			//25.2 >> 252
+				
+				temp_frame[0]=0x80;
+				temp_frame[1]=temp_int>>8;
+				temp_frame[2]=temp_int>>0;
+				mission_state[TEMP_QUERY]=0x80;
+				one_can_frame_send((u8 *)temp_frame,3,0xAA);
 				lm75_status=LM75_IDLE;
 			break;
 			
@@ -380,25 +482,6 @@ void lm75a_mission_polling(void){
 	
 }
 
-
-void bubble_sort_better(__IO u16 a[],u16 n)  //ÕâÊÇÊ²Ã´¹í£¿  ¸úADCÓĞ¹Ø
-{
-    for(u16 i=0; i<n-1; i++)
-    {
-        u16 isSorted = 0;
-        for(u16 j=0; j<n-1-i; j++)
-        {
-            if(a[j] > a[j+1])
-            {
-                isSorted = 1;
-                u16 temp = a[j];
-                a[j] = a[j+1];
-                a[j+1]=temp;
-            }
-        }
-        if(isSorted) break; 
-    }
-}
 
 
 

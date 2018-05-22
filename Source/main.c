@@ -184,7 +184,7 @@ int main(void) {
 		usart_debug_mission();
 #else
 			//温度显示任务
-			LM75_mission();
+			temp_display_mission();
 #endif
 
 		//蜂鸣器任务

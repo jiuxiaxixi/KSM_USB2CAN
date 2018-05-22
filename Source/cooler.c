@@ -1,5 +1,5 @@
 #include "cooler.h"
-#include "lm75a.h"	
+#include "temp_control.h"	
 #include "notification.h"
 u8 power_off_state;
 extern u32 time;
@@ -59,13 +59,6 @@ static void cooler_pwm_on(void){     //开制冷2
 	LED_ON(LED_COOLER_PWM);
 }
 
-
-static void cooler_pwm_off(void){  //关制冷2
-
-	GPIO_SetBits(COOLER_PORT,COOLER_PWM_PIN);
-	LED_OFF(LED_COOLER_PWM);
-	
-}
 
 //电源管理-继电器初始化
 void power_init(void){

@@ -32,7 +32,7 @@
 	1.61B 2018/5/20 增加温度传感器补偿调试功能
 *////////////////
 
-#include "lm75a.h"
+#include "temp_control.h"	
 #include "one_dimension_code.h"
 #include "can.h"
 #include "MicroStepDriver.h" 

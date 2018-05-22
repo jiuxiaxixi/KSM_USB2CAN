@@ -1,8 +1,6 @@
-#include "lm75a.h"	
 #include "cooler.h"
-#include "MSD_test.h"  
 #include "BUZZER.h"
-__IO uint16_t ADC1OscConver[ADC_SIZE];
+#include "temp_control.h"	
 extern u32 time;
 u32 lm75a_time=0;
 u8	lm75_status=0;
@@ -14,193 +12,6 @@ char LM75_rx_buffer[20];
 
 LM75_usart_t LM75t;
 volatile lm35_temp_t lm35_t;
-static void Adc1IoConfig(void)    //内部函数
-{
-    /*
-    IO口配置
-    */
-    GPIO_InitTypeDef    GPIO_InitStructure;
-    //开C口时钟，
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    //复位配置
-    GPIO_StructInit(&GPIO_InitStructure);
-    //设置为模拟输入模式
-    GPIO_InitStructure.GPIO_Pin=GPIO_Pin_2;
-    GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AN;
-    //不带上拉
-    GPIO_InitStructure.GPIO_PuPd=GPIO_PuPd_NOPULL;
-    //将以上设置应用于寄存器
-    GPIO_Init(GPIOA,&GPIO_InitStructure);
-}
-/*
-功能:tim2触发器初始化
-*/
-static void Tim2Config(void)
-{
-    /*
-    tim配置
-    */
-    TIM_TimeBaseInitTypeDef         TIM_TimeBaseInitStructure;
-    //打开TIM时钟8
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
-    //初始化配置结构,不受其它配置干扰
-    TIM_TimeBaseStructInit(&TIM_TimeBaseInitStructure);
-    //对APB1时钟不分频,由system_stm32f4xx.c可知
-    //APB1=AHB/4=SYSCLK/4=168M/4=42M,则TIM3=APB1*2=84M
-    TIM_TimeBaseInitStructure.TIM_ClockDivision=TIM_CKD_DIV1;
-    //分频值=168M/(Prescaler+1)/2=0.5us
-    TIM_TimeBaseInitStructure.TIM_Prescaler=42-1;
-    //溢出时间确定
-    TIM_TimeBaseInitStructure.TIM_Period=44;
-    //向上计数方式
-    TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up;
-	
-    //将以上配置应用于定时器
-    TIM_TimeBaseInit(TIM8,&TIM_TimeBaseInitStructure);
-    //数据更新作为触发源
-    TIM_SelectOutputTrigger(TIM8,TIM_TRGOSource_Update);
-}
-/*
-功能:ADC1的示波器功能配置
-备注:使用tim2做触发
-*/
-void Adc1OscConfig(void)
-{
-     
-    /*
-    dma配置
-    */
-    DMA_InitTypeDef DMA_InitStructure;
-    NVIC_InitTypeDef        NVIC_InitStructure;
-    //开启MDA2时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
-    //初始化各寄存器配置
-    DMA_DeInit(DMA2_Stream0);
-    DMA_StructInit( &DMA_InitStructure);
-    //选取DMA通道0,数据流0
-    DMA_InitStructure.DMA_Channel=DMA_Channel_0;
-	
-    //数据传入地址->ADC基地址加上DR寄存器偏移地址
-    DMA_InitStructure.DMA_PeripheralBaseAddr=(uint32_t)ADC1_DR_Address;
-    //数据送入地址
-    DMA_InitStructure.DMA_Memory0BaseAddr=(uint32_t)ADC1OscConver;
-    //数据传送方向为外设到SRAM
-    DMA_InitStructure.DMA_DIR=DMA_DIR_PeripheralToMemory;
-    //数据缓冲区1
-    DMA_InitStructure.DMA_BufferSize=ADC_SIZE;
-    //外设地址固定
-    DMA_InitStructure.DMA_PeripheralInc=DMA_PeripheralInc_Disable;
-    //内存地址自增
-    DMA_InitStructure.DMA_MemoryInc=DMA_MemoryInc_Enable;
-    //数据类型为半字
-    DMA_InitStructure.DMA_PeripheralDataSize=DMA_PeripheralDataSize_HalfWord;//DMA_PeripheralDataSize_Byte;//DMA_PeripheralDataSize_HalfWord;
-    DMA_InitStructure.DMA_MemoryDataSize=DMA_MemoryDataSize_HalfWord;//DMA_MemoryDataSize_Byte;//DMA_MemoryDataSize_HalfWord;
-    //循环传输
-    DMA_InitStructure.DMA_Mode=DMA_Mode_Circular;
-    //高优先级
-    DMA_InitStructure.DMA_Priority=DMA_Priority_High;
-    //不使用FIFO模式
-    DMA_InitStructure.DMA_FIFOMode=DMA_FIFOMode_Disable;
-    DMA_InitStructure.DMA_FIFOThreshold=DMA_FIFOThreshold_HalfFull;
-    DMA_InitStructure.DMA_MemoryBurst=DMA_MemoryBurst_Single;
-    DMA_InitStructure.DMA_PeripheralBurst=DMA_PeripheralBurst_Single;
-     
-//  DMA_DoubleBufferModeCmd(DMA2_Stream0, DISABLE);
-    //将以上设置应用于DMA2，通道0，数据流0
-    DMA_Init(DMA2_Stream0,&DMA_InitStructure);
-    //使能DMA
-    DMA_Cmd(DMA2_Stream0, ENABLE);
-    //选择DMA2通道数据流0
-    NVIC_InitStructure.NVIC_IRQChannel=DMA2_Stream0_IRQn;//DMA2_Stream0_IRQHandler;
-    //抢占式优先级为0
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=1;
-    //响应式优先级为12
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority=4;
-    //通道使能
-    NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
-    //将以上配置应用于NVIC
-    NVIC_Init(&NVIC_InitStructure);
-    //使能DMA传输完成中断
-   // DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,ENABLE);
-     
-    /*
-    功能:ADC配置
-    */
-    ADC_InitTypeDef ADC_InitStructure;
-    //开启ADC1时钟
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-    //12位转换精度
-    ADC_InitStructure.ADC_Resolution=ADC_Resolution_12b;//ADC_Resolution_8b;//ADC_Resolution_12b; 
-    //使用单通道转换模式
-    ADC_InitStructure.ADC_ScanConvMode=DISABLE;
-    //不使用多次转换模式
-    ADC_InitStructure.ADC_ContinuousConvMode=DISABLE;//ENABLE;//DISABLE;
-    //使用外部上升沿触发模式
-    ADC_InitStructure.ADC_ExternalTrigConvEdge=ADC_ExternalTrigConvEdge_Rising;//ADC_ExternalTrigConvEdge_Rising;//ADC_ExternalTrigConvEdge_None;
-    //TIM3溢出触发
-    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T8_TRGO;//ADC_ExternalTrigConv_T1_CC1;
-    //选择右对齐方式
-    ADC_InitStructure.ADC_DataAlign=ADC_DataAlign_Right;
-    //选用转换通道数为1个
-    ADC_InitStructure.ADC_NbrOfConversion=1;
-    //将以上设置应用于对应寄存器
-    ADC_Init(ADC1,&ADC_InitStructure);
-    //使能ADC在DMA模式下的连续转换
-    ADC_DMARequestAfterLastTransferCmd(ADC1,ENABLE);
-    //使能ADC的DMA模式
-    ADC_DMACmd(ADC1,ENABLE);
-    //配置ADC1规则组(得出其单次采样时间为:(3+12)/21≈0.7us)->12bit
-    ADC_RegularChannelConfig(ADC1,ADC_Channel_2,1,ADC_SampleTime_480Cycles);//ADC_SampleTime_3Cycles/ADC_SampleTime_480Cycles
-    //使能ADC
-    ADC_Cmd(ADC1,ENABLE);
-}
- 
-/*
-功能:各ADC共同功能配置
-*/
-static void AdcSenCommConfig(void)
-{
-    ADC_CommonInitTypeDef   ADC_CommonInitStructure;
-    //ADC为独立模式
-    ADC_CommonInitStructure.ADC_Mode=ADC_Mode_Independent;
-	
-    //ADC时钟为APB2的2分频->84/4=21MHZ(F407ADC在2.4-3.6V供电电压下最大速率36M,稳定速度为30M)
-    ADC_CommonInitStructure.ADC_Prescaler=ADC_Prescaler_Div8;
-	
-    //使用ADC的DMA复用
-    ADC_CommonInitStructure.ADC_DMAAccessMode=ADC_DMAAccessMode_2;
-	
-    //两次采样的间隔时间为5个ADC时钟周期(5/21≈0.24us)
-    ADC_CommonInitStructure.ADC_TwoSamplingDelay=ADC_TwoSamplingDelay_5Cycles;
-    //将以上设置应用于对应的寄存器
-    ADC_CommonInit(&ADC_CommonInitStructure);
-}
-/*
-功能:开始ADC1示波器采样
-*/
-void StartAdc1OscSam(void)
-{
- TIM_Cmd(TIM8, ENABLE);
-	DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,ENABLE);
-}
-/*
-功能:停止ADC1示波器采样
-*/
-void StopAdc1OscSam(void)
-{
- TIM_Cmd(TIM8, DISABLE);
-	DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,DISABLE);
-}
-
-u8 lm75a_init(){
-
-	Adc1IoConfig();
-	AdcSenCommConfig();
-	Tim2Config();
-	Adc1OscConfig();
-	
-	return 0;
-}
 
 	
 void lm75a_temp_read_polling(void){
@@ -220,9 +31,13 @@ void lm75a_temp_read_polling(void){
 		/*	if(motor.running_state!=M_IDLE)
 				break;
 		*/
-			lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature_offset(B3470_C2);      
+#if USE_LM35
+		lm35_t.temp_buffer[lm35_t.times]=Get_Adc_Average(ADC_Channel_2,100); 
+#else
+		lm35_t.temp_buffer[lm35_t.times]=b3470_get_temperature_offset(B3470_C2); 
+#endif 		
 			lm35_t.times++;                 //加1                                                          
-			if(lm35_t.times>2)
+			if(lm35_t.times>5)
 					lm35_t.mission_state=LM35_READ_FINISH;
 				
 			break;
@@ -282,37 +97,40 @@ void lm75a_temp_read_polling(void){
 
 
 u16 temp_faded(u16 temp , u16 max_temp){   //温度渐变程序（查询温度时接收到真实温度，最大温度）
-		
-		if(temp>=max_temp){           //如果大于15， 标志为0，返回这个温度
+		//如果大于15， 标志为0，返回这个温度
+		if(temp>=max_temp)
+		{           
 			gobal_temp =temp;
 			gobal_temp_flag=0;
 			return gobal_temp;
 		}
   
-		
-		
 		//小于15的时候
-		if(!gobal_temp_flag){          //读取温度值  gobal_temp_flag默认为0
+		if(!gobal_temp_flag)
+		{          //读取温度值  gobal_temp_flag默认为0
 			gobal_temp_flag=1;
 			gobal_temp = temp;
 		}
 		
-		
-		if(gobal_temp_flag){             //如果新温度相等，不变，如果相差0.1，更新，如果有变化，0.2为单位变化
+		if(gobal_temp_flag)
+		{             //如果新温度相等，不变，如果相差0.1，更新，如果有变化，0.2为单位变化
 			if(gobal_temp == temp)
 				return gobal_temp;
 			
-			if((gobal_temp - temp == 1) || (temp - gobal_temp == 1)){
+			if((gobal_temp - temp == 1) || (temp - gobal_temp == 1))
+			{
 				gobal_temp = temp;
 				return gobal_temp;
 			}
-			
-			if(gobal_temp < temp){
+				
+			if(gobal_temp < temp)
+			{
 				gobal_temp += 2;
 				return gobal_temp;
 			}	
-			
-			if(gobal_temp > temp){
+				
+			if(gobal_temp > temp)
+			{
 				gobal_temp -= 2;
 				return gobal_temp;
 			}			
@@ -582,20 +400,5 @@ void bubble_sort_better(__IO u16 a[],u16 n)  //这是什么鬼？  跟ADC有关
     }
 }
 
-//
-
-
-void DMA2_Stream0_IRQHandler(void)     //MDA2 中断处理
-{	
-	
-	
-	 	if(DMA_GetFlagStatus(DMA2_Stream0,DMA_IT_TC)==SET)  
-   {   
-		 StopAdc1OscSam(); //关闭
-		 lm35_t.mission_state=LM35_READ_FINISH;		 
-		DMA_ClearFlag(DMA2_Stream0,DMA_IT_TC);	
-}
-	
-} 
 
 

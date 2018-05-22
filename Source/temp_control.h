@@ -1,14 +1,14 @@
 #ifndef __LM75A_H
 #define __LM75A_H	     
-#include "tm_stm32f4_i2c.h"
 #include "tm_stm32f4_usart.h"
 #include "tm_stm32f4_usart_dma.h"
 #include "usart_screen.h"
 #include "can.h"
 #include "b3470.h"
 #include <stdio.h>
+#include "adc.h"
 
-#define LM75_IDLE 		0
+#define LM75_IDLE 		0	
 #define LM75_PENGDING 1
 #define LM75_SUCCESS	2
 #define LM75_TX	3
@@ -42,6 +42,8 @@
 #define LM35_READ_START 	0x01
 #define	LM35_READ_FINISH	0x02
 #define ADC_SIZE	400
+
+#define USE_LM35 1				//是否使用LM35 温度传感器  1:LM32 0:B3470
 typedef struct {
 	u8 	current_mission;  										//mission type
 	u8	mission_state;         								//电平转换时间
@@ -82,7 +84,6 @@ void lm75a_usart_polling(void);
 u8 LM75_parpare_buffer(void);
 void LM75_mission(void);
 extern u8	lm75_status;
-extern __IO uint16_t ADC1OscConver[ADC_SIZE];
 void lm75a_mission_polling(void);
 void lm75a_temp_read_polling(void);
 void bubble_sort_better(__IO u16 a[],u16 n);

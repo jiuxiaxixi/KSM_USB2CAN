@@ -43,7 +43,7 @@
 #include "stm32fxxx_it.h"
 #include "string.h"
 #include <stdio.h>
-#include "lm75a.h"
+#include "temp_control.h"	
 #include "b3470.h"
 #include "one_dimension_code.h"
 #include "can.h"
@@ -134,7 +134,7 @@ int main(void) {
 	//can初始化
 	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,24,0);//CAN初始化环回模式,波特率125Kbps
 #if USART_DEBUG_ENABLE
-	//普通初始化
+	//串口普通初始化
 	USART_Configuration(9600);
 #else
 	//DMA串口初始化

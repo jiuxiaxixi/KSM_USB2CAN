@@ -26,7 +26,6 @@
 //    其他,初始化失败; 
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
-extern char USART_Buffer[100];
 
 uint8_t USB2CAN_STATE;
 CanRxMsg  CanRxMessage[CAN_BUFFER_SIZE];
@@ -262,8 +261,8 @@ void can_mesage_send_polling(){
 				CanRxMessage[can_mission.can_buffer_index].Data[0]=can_mission.current_mission;
 				memcpy(CanRxMessage[can_mission.can_buffer_index].Data+1,can_mission.buf+i*7,(can_last_frame_byte+1));
 				}
-				sprintf(USART_Buffer,"can_frame_num %d can_last_frame_byte %d can_mission.can_buffer_index %d canRxMsgBufferIndex%d\n",can_frame_num,can_last_frame_byte,can_mission.can_buffer_index,canRxMsgBufferIndex);
-				TM_USART_DMA_Send(USART1, (uint8_t *)USART_Buffer, strlen(USART_Buffer));
+//				sprintf(USART_Buffer,"can_frame_num %d can_last_frame_byte %d can_mission.can_buffer_index %d canRxMsgBufferIndex%d\n",can_frame_num,can_last_frame_byte,can_mission.can_buffer_index,canRxMsgBufferIndex);
+//				TM_USART_DMA_Send(USART1, (uint8_t *)USART_Buffer, strlen(USART_Buffer));
 			
 				can_mission.current_mission=CAN_MISSION_IDLE;
 				can_mission.mission_state=CAN_MISSION_IDLE;

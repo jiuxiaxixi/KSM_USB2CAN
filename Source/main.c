@@ -58,7 +58,7 @@
 #include "cooler.h"
 #include "adc.h"
 #include "mission.h"
-
+#include "tm_stm32f4_watchdog.h"
 /*********************************************************************************************************
 ** 是否启用串口调试功能
 *********************************************************************************************************/
@@ -135,7 +135,7 @@ int main(void) {
 	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,24,0);//CAN初始化环回模式,波特率125Kbps
 #if USART_DEBUG_ENABLE
 	//普通初始化
-	USART_Configuration(115200);
+	USART_Configuration(9600);
 #else
 	//DMA串口初始化
 	TM_USART_Init(USART1, TM_USART_PinsPack_2, 9600);
@@ -170,8 +170,16 @@ int main(void) {
 	power_init();
 	//蜂鸣器初始化
 	BUZZER_Init();
+	//看门狗初始化
+	if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
+			PRINTF("SYSTEM RESET\r\n");
+	else
+			PRINTF("KSM reagent-disk system start!\r\n");
+	TM_WATCHDOG_Init(TM_WATCHDOG_Timeout_2s);
+	
+	
 	while (1) {          //无限循环
-		
+		TM_WATCHDOG_Reset(); //喂狗
 #if USART_DEBUG_ENABLE
 		usart_debug_mission();
 #else

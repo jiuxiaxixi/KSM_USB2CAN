@@ -210,7 +210,8 @@ int main(void) {
 			one_dimension_code_mission_polling();
 			//电机维护命令
 			motor_maintain_polling();
-			
+			//制冷通断任务
+			cooler_pwm_mission();
 //通信部分	
 		switch(USB2CAN_STATE){ 
 		

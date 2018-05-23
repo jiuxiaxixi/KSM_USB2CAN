@@ -136,12 +136,15 @@ void mission_polling(void){
 				break;
 				
 				case COOLER_START:         // 10 0D   开启制冷
-						lm35_t.cooler_function=1;
-						cooler_on();
+						//lm35_t.cooler_function=1;
+						//cooler_on();
+						lm35_t.pwm_time=0;
+						lm35_t.cooler_pwm_function =1;
 						mission_success_send(COOLER_START);
 				break;
 				
 				case COOLER_STOP:               // 10 0E    关闭制冷
+							lm35_t.cooler_pwm_function = COOLER_OFF;
 							lm35_t.cooler_function=0;
 							lm35_t.close_inter_fan_enable=1;
 							lm35_t.close_inter_fan_time=time+10000;

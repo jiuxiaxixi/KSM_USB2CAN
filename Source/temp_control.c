@@ -129,7 +129,11 @@ void lm75a_temp_read_polling(void){
 		}
 		
 		if(time>lm35_t.close_inter_fan_time && lm35_t.close_inter_fan_enable)   //内部风扇关闭标志 可用  且 时间过了60S   关闭内部风扇
+		{
 			close_inter_fan();
+			lm35_t.close_inter_fan_enable=0;
+		}
+		
 #if !USE_LM35
 		if(lm35_t.cooler_function)
 		{    //开关制冷条件
@@ -168,22 +172,45 @@ void lm75a_temp_read_polling(void){
 			}
 #endif
 		}
-		if(lm35_t.c3_control_cooler)
+		if(lm35_t.c3_control_cooler & lm35_t.cooler_function)
 		{
 			if(b3470_get_temperature_offset(B3470_C2)<flash_get_para(FLASH_C2_ZL_LOW))
 			{
 				PRINTF("关闭制冷C2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_off();
+				lm35_t.close_cooler_time = time +20000;
 				lm35_t.close_inter_fan_time=time+60000;  //延时60S
 				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
+				lm35_t.close_cooler_enable =1;        //关闭内部风扇标志可用
 				//设置时间延时关闭风扇
 				
 			}
-			if(b3470_get_temperature_offset(B3470_C2)>flash_get_para(FLASH_C2_ZL_HIGH))
+			if(b3470_get_temperature_offset(B3470_C2)>flash_get_para(FLASH_C2_ZL_HIGH) || (time > lm35_t.close_cooler_time && lm35_t.close_cooler_enable) )
 			{
-				PRINTF("关闭制冷C2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
+				PRINTF("开启制冷C2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_on();
 				lm35_t.close_inter_fan_enable=0;     //关闭内部风扇标志为不可关
+			}
+		}
+#else 
+		if(lm35_t.cooler_function)
+		{
+		
+		if(lm35_t.temp_real<flash_get_para(FLASH_C3_ZL_LOW))
+			{
+				
+				//设置时间延时关闭风扇
+				PRINTF("LM35关闭温度 %d\r\n",lm35_t.temp_real);
+				cooler_off();
+				lm35_t.close_inter_fan_time=time+60000;  //延时60S
+				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
+				
+			}
+			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH))
+			{
+				cooler_on();
+				lm35_t.close_inter_fan_enable=0;     //关闭内部风扇标志为不可关
+				PRINTF("LM35开启温度%d\r\n",lm35_t.temp_real);
 			}
 		}
 #endif

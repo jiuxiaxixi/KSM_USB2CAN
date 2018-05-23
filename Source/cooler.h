@@ -7,8 +7,8 @@
 #define COOLER_UP		0x01
 #define COOLER_DOWN	0x02
 
-#define COOLER_UP_TIME			2000
-#define COOLER_DOWN_TIME		5000
+#define COOLER_UP_TIME			1800000  //工作半小时
+#define COOLER_DOWN_TIME		60000		 //关闭1分钟
 
 
             // 11是制冷片，12是水冷泵，13是风扇1水冷风扇，14是风扇3内部风扇
@@ -36,4 +36,5 @@ void power_init(void);
 void 	power_on(void);
 void 	power_off(void);
 void 	cooler_pwm_mission(void);
+void open_inter_fan(void);
 #endif

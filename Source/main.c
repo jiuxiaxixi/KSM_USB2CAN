@@ -5,8 +5,8 @@
 **
 **--------------File Info---------------------------------------------------------------------------------
 ** File Name:               main.c
-** Last modified Date:      2018-05-18
-** Last Version:            v1.1
+** Last modified Date:      2018-05-23
+** Last Version:            v1.2
 ** Description:             试剂盘主函数
 ** 
 **--------------------------------------------------------------------------------------------------------
@@ -22,6 +22,14 @@
 ** Description:             增加串口调试功能，并且在主函数中定义
 **													通过宏USART_DEBUG_ENABLE 打开串口调试功能 
 **													可以使用printf 函数 并在主函数中增加一个定时打印任务
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-23
+** Version:                 v1.2
+** Description:             
+**													1.增加看门狗 
+**													2.断电恢复缓存
+**													3.新增加温度控制方案  使用B3470 NTC温度传感器 
 **
 *********************************************************************************************************/
 
@@ -88,6 +96,10 @@ extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
 extern __IO uint8_t DeviceConfigured;
+extern uint8_t usart_state;
+/*********************************************************************************************************
+ 看门狗全局变量
+*********************************************************************************************************/
 
 /*********************************************************************************************************
  USB 高速工作模式
@@ -121,7 +133,69 @@ void usart_debug_mission(void)
 }
 #endif
 
+/*********************************************************************************************************
+** Function name:       watch_dog_recovery
+** Descriptions:        死机后恢复电源和制冷的任务
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/
+static void watch_dog_recovery()
+{
+	if(power_satus)
+	{
+		PRINTF("WDOG 开电 \r\n");
+		power_on();
+		power_off_state=0;
+	}
+	else
+	{
+		PRINTF("WDOG 关电 \r\n");
+		power_off();
+		power_off_state=1;
+	}
+	
+	if(temp_control)
+	{
+		PRINTF("WDOG 开启制冷 \r\n");
+		lm35_t.pwm_time=0;
+		lm35_t.cooler_pwm_function =1;
+	}
+	else
+	{
+		PRINTF("WDOG 关闭制冷 \r\n");
+		lm35_t.cooler_pwm_function = COOLER_OFF;
+		lm35_t.cooler_function=0;
+		lm35_t.close_inter_fan_enable=1;
+		lm35_t.close_inter_fan_time=time+10000;
+		cooler_off();
+	}
+	
+	PRINTF("SYSTEM RESET \r\n");
+}
+/*********************************************************************************************************
+** Function name:       system_attribute_init
+** Descriptions:        保存在RAM2中 不初始化的变量在开机的时候进行初始化
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/
+static void system_attribute_init(void)
+{
+  USBRxCanBufferIndex=0;
+	USBRxIndex=0;
 
+	canRxMsgBufferIndex=0;
+	canRxIndex=0;
+	
+	power_satus=1;
+	temp_control=0;
+	usart_state=0;
+}
 
 int main(void) {
 	/* Initialize system */
@@ -172,9 +246,15 @@ int main(void) {
 	BUZZER_Init();
 	//看门狗初始化
 	if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
-			PRINTF("SYSTEM RESET\r\n");
+	{
+			watch_dog_recovery();
+	}
 	else
-			PRINTF("KSM reagent-disk system start!\r\n");
+	{
+			system_attribute_init();
+		PRINTF("KSM reagent-disk system start!\r\n");
+	}
+			
 	TM_WATCHDOG_Init(TM_WATCHDOG_Timeout_2s);
 	
 	

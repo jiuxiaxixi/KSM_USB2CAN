@@ -41,8 +41,17 @@
 u8 power_off_state;
 extern u32 time;
 
-//制冷片初始化，端口配置
-void	cooler_init(void){
+/*********************************************************************************************************
+** Function name:       cooler_init
+** Descriptions:        制冷片初始化，端口配置
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-18
+*********************************************************************************************************/
+void	cooler_init(void)
+{
 	  GPIO_InitTypeDef GPIO_InitStructure;
 	
 		COOLER_AHBxClock_FUN(COOLER_GPIO_CLK,ENABLE);//开启时钟
@@ -57,44 +66,75 @@ void	cooler_init(void){
 		cooler_off(); //初始化关闭制冷
 }
 
-
-//制冷开起 低电平
-void 	cooler_on(void){
+/*********************************************************************************************************
+** Function name:       cooler_on
+** Descriptions:        制冷开起 低电平 打开内部风扇 开启指示灯
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/
+void 	cooler_on(void)
+{
 	GPIO_ResetBits(COOLER_PORT,COOLER_PIN);
 	open_inter_fan();
 	LED_ON(COOLER_LED);
 }
 
-//制冷关闭 高电平
-                                                                        // 11是制冷片，12是水冷泵，13是风扇1-水冷风扇，14是风扇3-内部风扇
+
+/*********************************************************************************************************
+** Function name:       cooler_off
+** Descriptions:       	制冷关闭 高电平 关闭指示灯
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/                                                                        // 11是制冷片，12是水冷泵，13是风扇1-水冷风扇，14是风扇3-内部风扇
 void 	cooler_off(void){   //关闭制冷具体函数
 	  GPIO_SetBits(COOLER_PORT, GPIO_Pin_11);    //关闭制冷片
 		LED_OFF(COOLER_LED);
 }
 
+/*********************************************************************************************************
+** Function name:       close_inter_fan
+** Descriptions:       	关闭内部风扇
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/   
 void close_inter_fan(void){
 	GPIO_SetBits(COOLER_PORT, GPIO_Pin_14);    //关闭内部风扇 
 	PRINTF("关闭内部风扇 \r\n");
 }
 
+/*********************************************************************************************************
+** Function name:       open_inter_fan
+** Descriptions:       	开启内部风扇
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/  
 void open_inter_fan(void){
 	GPIO_ResetBits(COOLER_PORT, GPIO_Pin_14);    //关闭内部风扇 
 	PRINTF("开启内部风扇 \r\n");
 }
 
-void close_cooler_fan(void){                   //关闭水冷泵及其风扇
-	GPIO_SetBits(COOLER_PORT, GPIO_Pin_12);      //水冷泵
-	GPIO_SetBits(COOLER_PORT, GPIO_Pin_13);      //水冷泵风扇
-	
-}
 
-static void cooler_pwm_on(void){     //开制冷2
-	GPIO_ResetBits(COOLER_PORT,COOLER_PWM_PIN);
-	LED_ON(LED_COOLER_PWM);
-}
-
-
-//电源管理-继电器初始化
+/*********************************************************************************************************
+** Function name:       power_init
+** Descriptions:       	电源管理-继电器初始化
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/  
 void power_init(void){
 		GPIO_InitTypeDef GPIO_InitStructure;
 		POWER_AHBxClock_FUN(POWER_GPIO_CLK,ENABLE);  //时钟使能
@@ -108,24 +148,53 @@ void power_init(void){
 		power_on();
 }
 
+/*********************************************************************************************************
+** Function name:       power_on
+** Descriptions:       	电源管理-开继电器
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/  
 void 	power_on(void){   //开继电器
 	GPIO_ResetBits(POWER_PORT,POWER_PIN);
 	LED_ON(LED_POWER);
 }
 
+/*********************************************************************************************************
+** Function name:       power_off
+** Descriptions:       	电源管理-关闭继电器
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/ 
 void 	power_off(void){
 	GPIO_SetBits(POWER_PORT,POWER_PIN);   //关闭继电器  PD4
 	LED_OFF(LED_POWER);  
 }
 
-
-void 	cooler_pwm_mission(void){ // 未用
-	switch(lm35_t.cooler_pwm_function){
+/*********************************************************************************************************
+** Function name:       cooler_pwm_mission
+** Descriptions:        每隔半小时关闭制冷片1分钟
+** input parameters:    0
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-23
+*********************************************************************************************************/ 
+void 	cooler_pwm_mission(void)
+{ 
+	switch(lm35_t.cooler_pwm_function)
+	{
 		case COOLER_OFF:
-			break;
+		break;
 		
 		case COOLER_UP:
-			if(time>lm35_t.pwm_time){
+			if(time>lm35_t.pwm_time)
+			{
 				PRINTF("PWM 温度开启制冷 \r\n");
 				cooler_on();
 				lm35_t.cooler_pwm_function=COOLER_DOWN;
@@ -133,10 +202,11 @@ void 	cooler_pwm_mission(void){ // 未用
 				lm35_t.pwm_time=time+COOLER_UP_TIME;
 				break;
 			}
-			break;
+		break;
 			
 		case	COOLER_DOWN:
-				if(time>lm35_t.pwm_time){
+				if(time>lm35_t.pwm_time)
+				{
 				PRINTF("PWM 温度关闭制冷 \r\n");
 			  cooler_off();
 				lm35_t.close_inter_fan_time=time+60000;  //延时60S
@@ -145,9 +215,7 @@ void 	cooler_pwm_mission(void){ // 未用
 				lm35_t.cooler_pwm_function=COOLER_UP;
 				lm35_t.pwm_time=time+COOLER_DOWN_TIME;
 				break;
-			}
-			break;
-	
+				}
+		break;
 	}
-
 }

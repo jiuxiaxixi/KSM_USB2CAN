@@ -46,7 +46,7 @@
 
 
 #define CAN1_RX0_INT_ENABLE	1								    
-#define CAN_BUFFER_SIZE	1000
+#define CAN_BUFFER_SIZE	500
 										 							 				    
 u8 CAN1_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode);
  
@@ -67,20 +67,13 @@ void can_mutil_frame_send(u8 *buf,u8 length,u8 mission);
 void action_value_send_none_80(u8 *buf,u8 length,u8 mission);
 void poniter_plus_one(u16 * index);
 void poniter_add(u16 *index,u8 number);
-typedef struct {
-  u8 	current_mission;  			//mission type
-	u8	mission_state;
-  u8	data_length;         	
-  u8 	buf[256];								//电平转换时间
-	u8	can_buffer_index;
-}can_mission_t;
 
-extern can_mission_t can_mission;
 extern CanRxMsg CanRxMessage[CAN_BUFFER_SIZE];
 extern uint8_t canSendedIndex;
 extern uint16_t canRxMsgBufferIndex;
 extern uint16_t canRxIndex;
-
+extern uint8_t temp_control;
+extern uint8_t power_satus;
 
 extern uint8_t mission_state[255];
 //USB recive message cache

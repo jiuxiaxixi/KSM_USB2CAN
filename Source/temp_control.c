@@ -26,7 +26,7 @@
 ** Modified date:           2018-05-23
 ** Version:                 v1.2
 ** Description:             修正负数上传bug 
-**
+**													修复内部风扇关闭后不重新打开bug
 *********************************************************************************************************/
 /*********************************************************************************************************
 ** 是否启用串口调试功能
@@ -89,9 +89,11 @@ void lm75a_temp_read_polling(void){
 			lm35_t.times++;                 //加1                                                          
 			if(lm35_t.times>2)
 					lm35_t.mission_state=LM35_READ_FINISH;
+			PRINTF("温度读取\r\n");
 			break;
 		
 		case LM35_READ_FINISH:                   //温度读入后的处理
+			PRINTF("温度读取成功 \r\n");
 		for(u8 i=0;i<lm35_t.times;i++){
 			lm35_t.temp_all+=lm35_t.temp_buffer[i];
 		}
@@ -218,6 +220,9 @@ void lm75a_temp_read_polling(void){
 		
 		
 		break;
+		default:
+			lm35_t.mission_state = LM35_READ_IDLE;
+			break;
 	}
 	
 }

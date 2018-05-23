@@ -1,12 +1,49 @@
+/****************************************Copyright (c)****************************************************
+**                                	重庆科斯迈生物科技有限公司
+**                                    6500 试剂系统                    
+**																			@张校源
+**
+**--------------File Info---------------------------------------------------------------------------------
+** File Name:               can.c
+** Last modified Date:      2018-05-23
+** Last Version:            v1.1
+** Description:             can总线相关功能
+** 
+**--------------------------------------------------------------------------------------------------------
+** Created By:              张校源
+** Created date:            2017-05-16
+** Version:                 v1.0
+** Descriptions:            The original version
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-23
+** Version:                 v1.1
+** Description:             删除无用函数
+**
+*********************************************************************************************************/
+/*********************************************************************************************************
+** 是否启用串口调试功能
+*********************************************************************************************************/
+#define DEBUG 0
+#if DEBUG
+#include "usart.h"
+#define PRINTF(...)   printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
+#endif
+/*********************************************************************************************************
+	头文件
+*********************************************************************************************************/
+#include "stmflash.h"
 #include "can.h"
-#include "delay.h"
+#include "MSD_test.h"  
+#include "can.h"
 #include "usart.h"
 #include "usbd_cdc_core.h"
 #include "usbd_usr.h"
 #include "usbd_desc.h"
 #include <string.h>
-#include "tm_stm32f4_usart.h"
-#include "tm_stm32f4_usart_dma.h"
 #include "MSD_test.h"  
 #include "notification.h"
 
@@ -27,28 +64,33 @@
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
 
-uint8_t USB2CAN_STATE;
-CanRxMsg  CanRxMessage[CAN_BUFFER_SIZE];
-CanTxMsg	USBRxMessage[255];
+/*********************************************************************************************************
+	RAM2全局变量   死机后不重置
+*********************************************************************************************************/
+CanRxMsg  CanRxMessage[CAN_BUFFER_SIZE] 		__attribute__((at(0x10000218)));
+CanTxMsg	USBRxMessage[255] 								__attribute__((at(0x10002928)));
+uint8_t 	USBRxCanBufferIndex								__attribute__((at(0x10000008)));
+uint8_t 	USBRxIndex 												__attribute__((at(0x1000000C)));
+uint16_t 	canRxMsgBufferIndex 							__attribute__((at(0x10000010)));
+uint16_t 	canRxIndex 												__attribute__((at(0x10000014)));
+uint8_t 	temp_control 											__attribute__((at(0x10000000)));
+uint8_t 	power_satus 											__attribute__((at(0x10000004)));
 
-uint8_t USBRxCanBufferIndex=0;
-uint8_t USBRxIndex=0;
-
-uint16_t canRxMsgBufferIndex=0;
-uint16_t canRxIndex=0;
-
-can_mission_t can_mission;
+/*********************************************************************************************************
+	全局变量    
+*********************************************************************************************************/
 uint8_t mission_state[255];
-
+uint8_t USB2CAN_STATE;
 static void can_rec_index_add(){
 	//如果接受指针大于最大缓存长度，则置0
-		
-	if(canRxMsgBufferIndex>=CAN_BUFFER_SIZE-1){
+	if(canRxMsgBufferIndex>=CAN_BUFFER_SIZE-1)
+	{
 		canRxMsgBufferIndex=0;
-	}else{
+	}
+	else
+	{
 		canRxMsgBufferIndex++;
 	}
-	
 }
 
 
@@ -153,61 +195,6 @@ void CAN1_RX0_IRQHandler(void)
 }
 #endif
 
-//can发送一组数据(固定格式:ID为0X12,标准帧,数据帧)	
-//len:数据长度(最大为8)				     
-//msg:数据指针,最大为8个字节.
-//返回值:0,成功;
-//		 其他,失败;
-u8 CAN1_Send_Msg(void)
-{	
-  u8 mbox;
-  u16 i=0;
-	u16 j=0;
-  CanTxMsg TxMessage;
-	TxMessage.StdId=(USB_Rx_Buffer[0]<<24)|(USB_Rx_Buffer[1]<<16)|(USB_Rx_Buffer[2]<<8)|(USB_Rx_Buffer[3]<<0);
-  TxMessage.ExtId=(USB_Rx_Buffer[0]<<24)|(USB_Rx_Buffer[1]<<16)|(USB_Rx_Buffer[2]<<8)|(USB_Rx_Buffer[3]<<0);	 // 设置扩展标示符（29位）
-  TxMessage.IDE=USB_Rx_Buffer[4];		  // 使用扩展标识符
-  TxMessage.RTR=USB_Rx_Buffer[5];		  // 消息类型为数据帧，一帧8位
-  TxMessage.DLC=USB_Rx_Buffer[6];							 // 发送两帧信息
-	j=7;
-  for(i=0;i<USB_Rx_Buffer[6];i++)
-  TxMessage.Data[i]=USB_Rx_Buffer[j+i];				 // 第一帧信息          
-  mbox=CAN_Transmit(CAN1, &TxMessage);   
-  i=0;
-  while((CAN_TransmitStatus(CAN1, mbox)==CAN_TxStatus_Failed)&&(i<0XFFF))i++;	//等待发送结束
-  if(i>=0XFFF)return 1;
-  return 0;		
-
-}
-//can口接收数据查询
-//buf:数据缓存区;	 
-//返回值:0,无数据被收到;
-//		 其他,接收的数据长度;
-u8 CAN1_Receive_Msg(u8 *buf)
-{		   		   
- 	u32 i;
-	u8  j=0;
-//	CanRxMsg RxMessage;
-    if( CAN_MessagePending(CAN1,CAN_FIFO0)==0)return 0;		//没有接收到数据,直接退出 
-    CAN_Receive(CAN1, CAN_FIFO0, &CanRxMessage[canRxMsgBufferIndex]);//读取数据	
-	printf("can dealing mes %d \n",canRxMsgBufferIndex);
-
-	  buf[0]=CanRxMessage[canRxMsgBufferIndex].StdId>>24;
-		buf[1]=CanRxMessage[canRxMsgBufferIndex].StdId>>16;
-		buf[2]=CanRxMessage[canRxMsgBufferIndex].StdId>>8;
-		buf[3]=CanRxMessage[canRxMsgBufferIndex].StdId>>0; 
-	  buf[4]=CanRxMessage[canRxMsgBufferIndex].IDE;
-		buf[5]=CanRxMessage[canRxMsgBufferIndex].RTR;
-		buf[6]=CanRxMessage[canRxMsgBufferIndex].DLC;
-	  j=7;
-    for(i=0;i<CanRxMessage[canRxMsgBufferIndex].DLC;i++)
-    buf[j+i]=CanRxMessage[canRxMsgBufferIndex].Data[i];      
-	
-		canRxMsgBufferIndex++;
-	
-	return (CanRxMessage[canRxMsgBufferIndex-1].DLC+7);	
-	
-}
 
 void parpareUSBframe(u8 *buf){
 		u8 j,i;
@@ -221,55 +208,6 @@ void parpareUSBframe(u8 *buf){
 	  j=7;
     for(i=0;i<CanRxMessage[canRxIndex].DLC;i++)
     buf[j+i]=CanRxMessage[canRxIndex].Data[i];      
-}
-
-void can_mesage_send_polling(){
-	char i=0;
-	char can_frame_num=0;
-	char can_last_frame_byte;
-	if(can_mission.mission_state==CAN_MISSION_FINISHED && can_mission.current_mission!=CAN_MISSION_IDLE){
-			
-			//预留can帧
-			can_frame_num=(can_mission.data_length/7)+1;
-			//最后一帧的长度
-			can_last_frame_byte=can_mission.data_length%7;
-			//关闭中断
-			CAN_ITConfig(CAN1,CAN_IT_FMP0,DISABLE);
-			//记录开始的帧
-			can_mission.can_buffer_index=canRxMsgBufferIndex;
-			//整数帧判断
-			if(can_last_frame_byte==0)
-			{
-			canRxMsgBufferIndex+=can_frame_num-1;
-			}else{
-				canRxMsgBufferIndex+=can_frame_num;
-			}
-			//开启中断
-			 CAN_ITConfig(CAN1,CAN_IT_FMP0,ENABLE);
-			//填充整帧
-			for(i=0;i<can_frame_num-1;i++){
-				memcpy(CanRxMessage[can_mission.can_buffer_index].Data+1,can_mission.buf+i*7,8);
-				CanRxMessage[can_mission.can_buffer_index].StdId=CAN_MASTER_ID;
-				CanRxMessage[can_mission.can_buffer_index].DLC=8;
-				CanRxMessage[can_mission.can_buffer_index].Data[0]=can_mission.current_mission;
-				can_mission.can_buffer_index++;
-			}
-			//	canRxMsgBufferIndex++;
-				if(can_last_frame_byte!=0){
-				CanRxMessage[can_mission.can_buffer_index].StdId=CAN_MASTER_ID;
-				CanRxMessage[can_mission.can_buffer_index].DLC=can_last_frame_byte+1;
-				CanRxMessage[can_mission.can_buffer_index].Data[0]=can_mission.current_mission;
-				memcpy(CanRxMessage[can_mission.can_buffer_index].Data+1,can_mission.buf+i*7,(can_last_frame_byte+1));
-				}
-//				sprintf(USART_Buffer,"can_frame_num %d can_last_frame_byte %d can_mission.can_buffer_index %d canRxMsgBufferIndex%d\n",can_frame_num,can_last_frame_byte,can_mission.can_buffer_index,canRxMsgBufferIndex);
-//				TM_USART_DMA_Send(USART1, (uint8_t *)USART_Buffer, strlen(USART_Buffer));
-			
-				can_mission.current_mission=CAN_MISSION_IDLE;
-				can_mission.mission_state=CAN_MISSION_IDLE;
-		}
-	
-	
-	
 }
 
 
@@ -398,14 +336,6 @@ void	one_can_frame_send(u8 *buf,u8 length,u8 mission){
 	memcpy(CanRxMessage[current_frame_index].Data+1,buf,length+1);
 }
 
-u8 mission_idle_wait(u8 mission){
-	if(can_mission.current_mission==CAN_MISSION_IDLE)
-	{
-		can_mission.current_mission=mission;
-		return 1;
-	}
-			return 0;
-}
 
 
 

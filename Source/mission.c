@@ -15,7 +15,7 @@ extern  uint8_t USB_Rx_Buffer[];   //收缓存
 extern __IO uint8_t DeviceConfigured;
 u32 usb_waittime;
                                                            //执行命令
-u8 usart_state=0;
+u8 usart_state __attribute__((at(0x10000018)));
 char version[6];
 
 //初始化参数
@@ -136,6 +136,7 @@ void mission_polling(void){
 				break;
 				
 				case COOLER_START:         // 10 0D   开启制冷
+						temp_control=1;
 						//lm35_t.cooler_function=1;
 						//cooler_on();
 						lm35_t.pwm_time=0;
@@ -144,6 +145,7 @@ void mission_polling(void){
 				break;
 				
 				case COOLER_STOP:               // 10 0E    关闭制冷
+							temp_control=0;
 							lm35_t.cooler_pwm_function = COOLER_OFF;
 							lm35_t.cooler_function=0;
 							lm35_t.close_inter_fan_enable=1;
@@ -176,10 +178,12 @@ void mission_polling(void){
 					//motor.running_state=M_PR_END;
 					//motor.current_mission=MOTOR_SHOCKING_STOP;
 					mission_success_send(POWER_OFF);
+					power_satus=0;
 					break;
 				}
 				
 				if(USB_Rx_Buffer[8]==0xB2){     //10 15 B2 开电
+					power_satus=1;
 					power_off_state=0;
 					power_on();
 					//timer_reset();

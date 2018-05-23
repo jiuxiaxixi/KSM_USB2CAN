@@ -5,8 +5,8 @@
 **
 **--------------File Info---------------------------------------------------------------------------------
 ** File Name:               temp_control.h
-** Last modified Date:      2018-05-22
-** Last Version:            v1.1
+** Last modified Date:      2018-05-23
+** Last Version:            v1.2
 ** Description:             
 ** 
 **--------------------------------------------------------------------------------------------------------
@@ -19,7 +19,13 @@
 ** Modified by:             张校源
 ** Modified date:           2018-05-22
 ** Version:                 v1.1
-** Description:             
+** Description:             增加B3470 温度传感器控制方案
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-23
+** Version:                 v1.2
+** Description:             修正负数上传bug 
 **
 *********************************************************************************************************/
 #ifndef __TEMP_CONTROL_H_
@@ -94,14 +100,14 @@ typedef struct {
 typedef struct {
 	u8	mission_state;         								
 	u32 waitime;
-	u16 temp;
-	u16 temp_real;
-	u16 temp_buffer[10];
+	int16_t temp;
+	int16_t temp_real;
+	int16_t temp_buffer[10];
 	u8 cooler_function;
 	u8 c3_control_cooler;
 	u32	pwm_time;
 	u8 times;
-	u32 temp_all;
+	int32_t temp_all;
 	u8 temp_high;
 	u8 temp_alarm_state;
 	u32 close_inter_fan_time;

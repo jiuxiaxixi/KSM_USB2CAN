@@ -5,8 +5,8 @@
 **
 **--------------File Info---------------------------------------------------------------------------------
 ** File Name:               temp_control.c
-** Last modified Date:      2018-05-22
-** Last Version:            v1.1
+** Last modified Date:      2018-05-23
+** Last Version:            v1.2
 ** Description:             
 ** 
 **--------------------------------------------------------------------------------------------------------
@@ -19,7 +19,13 @@
 ** Modified by:             张校源
 ** Modified date:           2018-05-22
 ** Version:                 v1.1
-** Description:             
+** Description:             增加B3470 温度传感器控制方案
+**
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-23
+** Version:                 v1.2
+** Description:             修正负数上传bug 
 **
 *********************************************************************************************************/
 /*********************************************************************************************************
@@ -434,7 +440,7 @@ void reser_screen(void){
         }
 
 void lm75a_mission_polling(void){
-	u16 temp_int;
+	int16_t temp_int;
 	char temp_frame[3];
 	
 		switch(	lm75_status){
@@ -442,9 +448,10 @@ void lm75a_mission_polling(void){
 				break;
 			
 			case	LM75_PENGDING:
-				
+				PRINTF("temp is %d \r\n",lm35_t.temp);
 				if(lm35_t.temp>550)
 				{
+					
 					lm75_status=LM75_FALIED;
 				}else{
 					lm75_status=LM75_SUCCESS;

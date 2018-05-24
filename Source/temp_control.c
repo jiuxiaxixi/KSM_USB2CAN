@@ -465,7 +465,7 @@ void reser_screen(void){
 
 void lm75a_mission_polling(void){
 	int16_t temp_int;
-	char temp_frame[3];
+	char temp_frame[7];
 	
 		switch(	lm75_status){
 			case LM75_IDLE:
@@ -489,16 +489,14 @@ void lm75a_mission_polling(void){
 				temp_frame[0]=0x80;
 				temp_frame[1]=temp_int>>8;
 				temp_frame[2]=temp_int>>0;
-				mission_state[TEMP_QUERY]=0x80;
-				one_can_frame_send((u8 *)temp_frame,3,TEMP_QUERY);
-			
+				
 				temp_int=b3470_get_temperature_offset(B3470_C2);			//25.2 >> 252
 				
-				temp_frame[0]=0x80;
-				temp_frame[1]=temp_int>>8;
-				temp_frame[2]=temp_int>>0;
+				temp_frame[3]=temp_int>>8;
+				temp_frame[4]=temp_int>>0;
 				mission_state[TEMP_QUERY]=0x80;
-				one_can_frame_send((u8 *)temp_frame,3,0xAA);
+			
+				one_can_frame_send((u8 *)temp_frame,5,TEMP_QUERY);
 				lm75_status=LM75_IDLE;
 			break;
 			

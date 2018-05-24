@@ -362,7 +362,7 @@ int main(void) {
 					parpareUSBframe(canrxbuf);
 					USB_StatusDataSended=0;
 					DCD_EP_Tx(&USB_OTG_dev,CDC_IN_EP,canrxbuf,15);
-					usb_timeout = time + 10; //10ms自动重传
+					usb_timeout = time + 3; //3ms自动重传
 					USB2CAN_STATE = USB_WAIT_ACK;
 					break;
 					
@@ -371,6 +371,7 @@ int main(void) {
 				 {
 					PRINTF("USB重传超时\r\n");
 					USB2CAN_STATE=USB_SEND_FRAME;
+					 sendcount++;
 					USB_StatusDataSended=1;
 					break;
 				 }

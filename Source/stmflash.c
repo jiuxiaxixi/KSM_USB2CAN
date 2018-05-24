@@ -313,19 +313,45 @@ int16_t flash_get_para(uint8_t device)
 		case B3470_C3:
 			return fmt.buf[FLASH_TEMP2_OFFSET_POS];
 		case FLASH_C3_ZL_HIGH:
-			return fmt.buf[FLASH_C3_ZL_HIGH];
+			
+			if(fmt.buf[FLASH_C3_ZL_HIGH] == -1)
+				return 75;
+			else
+				return fmt.buf[FLASH_C3_ZL_HIGH];
+			
 		case FLASH_C3_ZL_LOW:
-			return fmt.buf[FLASH_C3_ZL_LOW];
+			
+			if(fmt.buf[FLASH_C3_ZL_LOW] == -1)
+				return 45;
+			else
+				return fmt.buf[FLASH_C3_ZL_LOW];
+			
 		case FLASH_C2_ZL_HIGH:
-			return fmt.buf[FLASH_C2_ZL_HIGH];
+			
+			if(fmt.buf[FLASH_C2_ZL_HIGH] == -1)
+				return 100;
+			else
+				return fmt.buf[FLASH_C2_ZL_HIGH];		
+			
 		case FLASH_C2_ZL_LOW:
-			return fmt.buf[FLASH_C2_ZL_LOW];		
+			
+			if(fmt.buf[FLASH_C2_ZL_LOW] == -1)
+				return -20;
+			else
+				return fmt.buf[FLASH_C2_ZL_LOW];		
+			
+		case FLASH_C2_STOP_TIME:
+			
+			if(fmt.buf[FLASH_C2_STOP_TIME] == -1)
+				return 60;
+			else
+				return fmt.buf[FLASH_C2_STOP_TIME];	
+			
 		default:
 			PRINTF("fmt got no para of %d",device);
 			return 0;
 	}
 }
-
 
 
 

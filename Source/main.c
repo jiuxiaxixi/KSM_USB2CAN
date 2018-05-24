@@ -30,8 +30,15 @@
 **													1.增加看门狗 
 **													2.断电恢复缓存
 **													3.新增加温度控制方案  使用B3470 NTC温度传感器 
+**--------------------------------------------------------------------------------------------------------
+** Modified by:             张校源
+** Modified date:           2018-05-24
+** Version:                 v1.3
+** Description:             
+**													1.修复USB2CAN bug
 **
 *********************************************************************************************************/
+
 
 
 /*********************************************************************************************************
@@ -91,6 +98,7 @@ uint32_t uart_debug_time;
  全局变量
 *********************************************************************************************************/
 char 		USB_SendReady=0;
+uint32_t 	usb_timeout;
 extern  __IO uint8_t USB_StatusDataSended;
 extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];
@@ -314,22 +322,22 @@ int main(void) {
 					comandbuf[1]=canRxMsgBufferIndex;
 				}
 				//USB上传指示灯
-			if(comandbuf[0]>0){
-				LED_ON(LED_UPLOAD);
-				lmt.usb_tx_time=time+MIN_SLOT;
-			}
+				led_to_notification(LED_USB_POLLING);
+
 				//每次查询最多上传220帧
-				if(comandbuf[0]<220){
+				if(comandbuf[0]<100){
 				send_size_buf[0]=comandbuf[0];
 				}else{
-				send_size_buf[0]=220;
+				send_size_buf[0]=100;
 				}
 				//发送缓存帧数
+				USB_StatusDataSended=0;
 				DCD_EP_Tx(&USB_OTG_dev,CDC_IN_EP,send_size_buf,1);
+				
 				
 				USB2CAN_STATE=USB_SEND_FRAME;
 				sendcount=0;
-				led_to_notification(LED_USB_POLLING);
+				
 				//如果没有待发送的帧，直接返回
 				if(send_size_buf[0]==0)
 					USB2CAN_STATE=USB_IDLE;
@@ -337,24 +345,44 @@ int main(void) {
 			  break;
 				
 		case USB_SEND_FRAME:
-					//发送成功才进行下一次发送
-					if(USB_StatusDataSended==0)
-						break;
-					USB_StatusDataSended=0;
+				//发送成功才进行下一次发送
+
+				 if(USB_StatusDataSended==0)
+					break;
 					
 					//超过帧数停止发送
-					if(sendcount>send_size_buf[0]){
+					//发送完成之后停止
+					if(sendcount>=send_size_buf[0]){
 						USB2CAN_STATE=USB_IDLE;
 						break;
 					}
-					//发送帧数
-					for(;sendcount<send_size_buf[0];sendcount++){
+					
+					
 					//把帧装入发送缓存中
 					parpareUSBframe(canrxbuf);
+					USB_StatusDataSended=0;
 					DCD_EP_Tx(&USB_OTG_dev,CDC_IN_EP,canrxbuf,15);
-					poniter_plus_one(&canRxIndex);
-					}
+					usb_timeout = time + 10; //10ms自动重传
+					USB2CAN_STATE = USB_WAIT_ACK;
 					break;
+					
+		case USB_WAIT_ACK:
+			if(time > usb_timeout)
+				 {
+					PRINTF("USB重传超时\r\n");
+					USB2CAN_STATE=USB_SEND_FRAME;
+					USB_StatusDataSended=1;
+					break;
+				 }
+			if(USB_StatusDataSended==0)
+				break;
+			  //指针++
+				led_to_notification(LED_USB_UPLOAD);
+				poniter_plus_one(&canRxIndex);
+				sendcount++;
+			  USB2CAN_STATE = USB_SEND_FRAME;
+			break;
+					
 			
 		}
 			//如果有待发送的帧

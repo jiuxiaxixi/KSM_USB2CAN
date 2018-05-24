@@ -47,8 +47,8 @@
 #define 					B3470_ADC_FUN_CONV_TIMES 					50
 #define 					B3470_ADC_FUN_OFF_TAIL						5
 
-#define 					B3470_C3													B3470_ADC_CHANNEL_1
-#define 					B3470_C2													B3470_ADC_CHANNEL_2
+#define 					B3470_C3													B3470_ADC_CHANNEL_2
+#define 					B3470_C2													B3470_ADC_CHANNEL_1
 
 
 /*********************************************************************************************************

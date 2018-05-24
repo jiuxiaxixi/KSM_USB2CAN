@@ -233,7 +233,12 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.62B");
+					sprintf(version,"1.64L");
+#if USE_LM35
+					version[4]='L';
+#else
+					version[4]='b';
+#endif 		
 					action_value_send_none_80((u8 *)version,5,VERSION_UPLOAD);
 				break;
 				
@@ -249,8 +254,6 @@ void mission_polling(void){
 				break;
 					
 				case LED1_ON_CMD:           //10 18£¬¿ªÆôLED1µÆÃüÁî
-					//if(power_off_state)
-					//	break;		
 					  switch(USB_Rx_Buffer[8]){
 							case RED_LED_t:
 								LED1_ON(RED_LED1);
@@ -264,7 +267,7 @@ void mission_polling(void){
 							break;
 							
 						}
-				mission_success_send(LED1_ON_CMD);
+						mission_success_send(LED1_ON_CMD);
 				break;		
 						
 				case LED1_OFF_CMD:           //10 19£¬¿ªÆôLED1µÆÃüÁî

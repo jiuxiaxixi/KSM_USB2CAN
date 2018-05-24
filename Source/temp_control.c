@@ -89,11 +89,10 @@ void lm75a_temp_read_polling(void){
 			lm35_t.times++;                 //加1                                                          
 			if(lm35_t.times>2)
 					lm35_t.mission_state=LM35_READ_FINISH;
-			PRINTF("温度读取\r\n");
+
 			break;
 		
 		case LM35_READ_FINISH:                   //温度读入后的处理
-			PRINTF("温度读取成功 \r\n");
 		for(u8 i=0;i<lm35_t.times;i++){
 			lm35_t.temp_all+=lm35_t.temp_buffer[i];
 		}
@@ -107,13 +106,6 @@ void lm75a_temp_read_polling(void){
 #endif 	
 			//处理温度在正常范围内渐变
 	  
-
-/*		if(75<lm35_t.temp_real<=80)
-			 lm35_t.temp-=5;
-  	else if(80<lm35_t.temp_real<90)
-			lm35_t.temp-=10;
-*/
-		
 		lm35_t.mission_state=LM35_READ_IDLE;
 		lm35_t.waitime=time+1000;
 	
@@ -178,9 +170,9 @@ void lm75a_temp_read_polling(void){
 		{
 			if(b3470_get_temperature_offset(B3470_C2)<flash_get_para(FLASH_C2_ZL_LOW))
 			{
-				PRINTF("关闭制冷C2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
+				PRINTF("关闭制冷C2 %d %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW),flash_get_para(FLASH_C2_STOP_TIME)*1000);
 				cooler_off();
-				lm35_t.close_cooler_time = time +20000;
+				lm35_t.close_cooler_time = time +flash_get_para(FLASH_C2_STOP_TIME)*1000;
 				lm35_t.close_inter_fan_time=time+60000;  //延时60S
 				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
 				lm35_t.close_cooler_enable =1;        //关闭内部风扇标志可用
@@ -198,7 +190,7 @@ void lm75a_temp_read_polling(void){
 		if(lm35_t.cooler_function)
 		{
 		
-		if(lm35_t.temp_real<flash_get_para(FLASH_C3_ZL_LOW))
+		if(lm35_t.temp_real<ZL_WD_L)
 			{
 				
 				//设置时间延时关闭风扇
@@ -208,7 +200,7 @@ void lm75a_temp_read_polling(void){
 				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
 				
 			}
-			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH))
+			if(lm35_t.temp_real>ZL_WD_H)
 			{
 				cooler_on();
 				lm35_t.close_inter_fan_enable=0;     //关闭内部风扇标志为不可关

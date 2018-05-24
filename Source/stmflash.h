@@ -41,7 +41,7 @@
 #define FLASH_C3_ZL_LOW	 			 		 14
 #define FLASH_C2_ZL_HIGH		 			 15
 #define FLASH_C2_ZL_LOW	 			 		 16
-#define FLASH_TEMP_STATUS			 		 17
+#define FLASH_C2_STOP_TIME			 	 17
 #define FLASH_PWOER_STATUS			 	 18
 
 /*********************************************************************************************************

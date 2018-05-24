@@ -292,7 +292,13 @@ int main(void) {
 			motor_maintain_polling();
 			//制冷通断任务
 			cooler_pwm_mission();
-//通信部分	
+
+			//时间快超时了 重置时间
+			if( time >= 0xEFFFFFFF && USB2CAN_STATE == USB_IDLE && motor.running_state == M_IDLE)
+			{
+			timer_reset();
+			}
+		//通信部分	
 		switch(USB2CAN_STATE){ 
 		
 		case USB_IDLE:

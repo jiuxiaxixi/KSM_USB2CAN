@@ -46,6 +46,6 @@
 #include "one_dimension_code.h"
 extern 	u32 usb_waittime;
 void mission_polling(void);
-
+extern void timer_reset(void);
 
 #endif

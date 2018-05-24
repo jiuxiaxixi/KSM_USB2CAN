@@ -19,26 +19,31 @@ u8 usart_state __attribute__((at(0x10000018)));
 char version[6];
 
 //初始化参数
-static void timer_reset(void){
+void timer_reset(void){
 	time=0;
 	motor.timeout=0;
 	motor.waittime=0;
 	lm35_t.waitime=0;
-	usb_waittime=0;
+	lm35_t.close_inter_fan_time=0;
+	lm35_t.times=0;
+	lm35_t.pwm_time=0;
+	
 	sut.timeout=0;
 	sut.waitime=0;
-	lmt.can_rx_time=0;
-	lmt.usb_polling_time=0;
-	lmt.usb_rx_time=0;
-	lmt.usb_tx_time=0;
+	
 	buzzer.waittime=0;
 	buzzer.ranktime=0;
 	LM75t.periodtime=0;  
 	odc.timeout=0;
 	odc.waittime=0;
-	lm35_t.times=0;
-	//usart_state=0;
+	
 	gobal_temp_flag=0;
+	
+	lmt.can_rx_time=0;
+	lmt.usb_rx_time=0;
+	lmt.usb_polling_time=0;
+	lmt.usb_rx_time=0;
+	usb_waittime=0;
 	for(u8 i=0;i<255;i++)
 		mission_state[i]=0;
 }
@@ -136,9 +141,8 @@ void mission_polling(void){
 				break;
 				
 				case COOLER_START:         // 10 0D   开启制冷
+					  cooler_received_command=1;   //收到过制冷命令
 						temp_control=1;
-						//lm35_t.cooler_function=1;
-						//cooler_on();
 						lm35_t.pwm_time=0;
 						lm35_t.cooler_pwm_function =1;
 						mission_success_send(COOLER_START);
@@ -175,10 +179,15 @@ void mission_polling(void){
 					timer_reset(); //关机时候重置参数
 					mission_success_send(POWER_OFF);
 					motor.running_state=M_IDLE;
-					//motor.running_state=M_PR_END;
-					//motor.current_mission=MOTOR_SHOCKING_STOP;
 					mission_success_send(POWER_OFF);
 					power_satus=0;
+					//如果之前收到过制冷命令 重新打开制冷
+					if(cooler_received_command)
+					{
+						temp_control=1;
+						lm35_t.pwm_time=0;
+						lm35_t.cooler_pwm_function =1;
+					}
 					break;
 				}
 				

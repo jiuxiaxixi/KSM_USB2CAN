@@ -56,6 +56,7 @@
 外部函数及变量声明
 *********************************************************************************************************/
 extern u8 power_off_state;
+extern u8 cooler_received_command;
 void	cooler_init(void);
 void 	cooler_on(void);
 void 	cooler_off(void);

@@ -32,7 +32,7 @@
  在写入和读取函数是 是以32位为基础
  所以规定在flash 任务中写入和读取的长度
 *********************************************************************************************************/
-#define FLASH_PARA_NUM			 			 20
+#define FLASH_PARA_NUM			 			 24
 #define FLASH_PARA_LEN_32					 (FLASH_PARA_NUM/2)
 #define FLASH_PARA_LEN_8					 (FLASH_PARA_NUM*2)
 #define FLASH_TEMP1_OFFSET_POS		 11
@@ -42,7 +42,10 @@
 #define FLASH_C2_ZL_HIGH		 			 15
 #define FLASH_C2_ZL_LOW	 			 		 16
 #define FLASH_C2_STOP_TIME			 	 17
-#define FLASH_PWOER_STATUS			 	 18
+#define FLASH_LM35_ZL_HIGH			 	 18
+#define FLASH_LM35_ZL_LOW		 	 		 19
+#define FLASH_LM35_ON_TIME		 	 	 20
+#define FLASH_LM35_OFF_TIME		 	 	 21
 
 /*********************************************************************************************************
  硬件相关宏定义

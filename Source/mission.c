@@ -141,17 +141,28 @@ void mission_polling(void){
 				break;
 				
 				case COOLER_START:         // 10 0D   开启制冷
+					
 					  cooler_received_command=1;   //收到过制冷命令
 						temp_control=1;
+#if USE_LM35
 						lm35_t.pwm_time=0;
 						lm35_t.cooler_pwm_function =1;
+#else
+						lm35_t.cooler_function=1;
+						cooler_on();
+#endif 
+						
+
 						mission_success_send(COOLER_START);
 				break;
 				
 				case COOLER_STOP:               // 10 0E    关闭制冷
 							temp_control=0;
-							lm35_t.cooler_pwm_function = COOLER_OFF;
+#if USE_LM35
+							lm35_t.cooler_pwm_function = COOLER_OFF;				
+#endif 
 							lm35_t.cooler_function=0;
+							
 							lm35_t.close_inter_fan_enable=1;
 							lm35_t.close_inter_fan_time=time+10000;
 							cooler_off();
@@ -187,6 +198,7 @@ void mission_polling(void){
 						temp_control=1;
 						lm35_t.pwm_time=0;
 						lm35_t.cooler_pwm_function =1;
+						lm35_t.cooler_function = 1;
 					}
 					break;
 				}
@@ -233,7 +245,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 上传版本号
-					sprintf(version,"1.64L");
+					sprintf(version,"1.66L");
 #if USE_LM35
 					version[4]='L';
 #else

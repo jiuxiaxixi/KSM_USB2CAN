@@ -346,14 +346,36 @@ int16_t flash_get_para(uint8_t device)
 				return 60;
 			else
 				return fmt.buf[FLASH_C2_STOP_TIME];	
+		
+		case FLASH_LM35_ZL_HIGH:
+			if(fmt.buf[FLASH_LM35_ZL_HIGH] == -1)
+				return 70;
+			else
+				return fmt.buf[FLASH_LM35_ZL_HIGH];	
+			
+		case FLASH_LM35_ZL_LOW:
+			if(fmt.buf[FLASH_LM35_ZL_LOW] == -1)
+				return 45;
+			else
+				return fmt.buf[FLASH_LM35_ZL_LOW];			
+
+		case FLASH_LM35_ON_TIME:
+			if(fmt.buf[FLASH_LM35_ON_TIME] == -1)
+				return (30*60);
+			else
+				return fmt.buf[FLASH_LM35_ON_TIME];	
+			
+		case FLASH_LM35_OFF_TIME:
+			if(fmt.buf[FLASH_LM35_OFF_TIME] == -1)
+				return (60);
+			else
+				return fmt.buf[FLASH_LM35_OFF_TIME];					
 			
 		default:
 			PRINTF("fmt got no para of %d",device);
 			return 0;
 	}
 }
-
-
 
 
 

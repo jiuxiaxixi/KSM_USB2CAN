@@ -134,7 +134,7 @@ void usart_debug_mission(void)
 {
 	if(uart_debug_time < time)
 	{
-		PRINTF("temp = %d \r\n",b3470_get_temperature_offset(B3470_C3));//字符串写入缓存
+		//PRINTF("temp = %d \r\n",b3470_get_temperature_offset(B3470_C3));//字符串写入缓存
 		uart_debug_time = time + 300;
 	}
 
@@ -170,6 +170,7 @@ static void watch_dog_recovery()
 		PRINTF("WDOG 开启制冷 \r\n");
 		lm35_t.pwm_time=0;
 		lm35_t.cooler_pwm_function =1;
+		lm35_t.cooler_function = 1;
 	}
 	else
 	{
@@ -298,8 +299,10 @@ int main(void) {
 			one_dimension_code_mission_polling();
 			//电机维护命令
 			motor_maintain_polling();
+#if USE_LM35
 			//制冷通断任务
 			cooler_pwm_mission();
+#endif 
 
 			//时间快超时了 重置时间
 			if( time >= 0xEFFFFFFF && USB2CAN_STATE == USB_IDLE && motor.running_state == M_IDLE)
@@ -362,7 +365,7 @@ int main(void) {
 					parpareUSBframe(canrxbuf);
 					USB_StatusDataSended=0;
 					DCD_EP_Tx(&USB_OTG_dev,CDC_IN_EP,canrxbuf,15);
-					usb_timeout = time + 3; //3ms自动重传
+					usb_timeout = time + 10; //5ms自动重传
 					USB2CAN_STATE = USB_WAIT_ACK;
 					break;
 					

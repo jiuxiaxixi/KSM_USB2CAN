@@ -73,7 +73,7 @@ void  b3470_init(void)
 	ADC_InitTypeDef       ADC_InitStructure;
 	
   RCC_AHB1PeriphClockCmd(B3470_IO_CLOCK_1, ENABLE);			//使能GPIOA时钟
-	RCC_AHB1PeriphClockCmd(B3470_IO_CLOCK_2, ENABLE);			//使能GPIOA时钟
+	RCC_AHB1PeriphClockCmd(B3470_IO_CLOCK_2, ENABLE);			//使能GPIOC时钟
   RCC_APB2PeriphClockCmd(B3470_ADC_CLOCK, ENABLE);		 //使能ADC1时钟
 
   //先初始化ADC1通道5 IO口
@@ -89,8 +89,13 @@ void  b3470_init(void)
  
 	RCC_APB2PeriphResetCmd(B3470_ADC_CLOCK,ENABLE);	  //ADC1复位
 	RCC_APB2PeriphResetCmd(B3470_ADC_CLOCK,DISABLE);	//复位结束	 
-	
-	
+
+#if LM35_TEST
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;					//PA0 			通道0
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;			//模拟输入
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;	//不带上下拉   
+  GPIO_Init(B3470_IO_GPIO_PORT_1, &GPIO_InitStructure);//初始化 
+#endif 
  
 	
   ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;//独立模式

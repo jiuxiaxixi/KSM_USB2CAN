@@ -148,11 +148,9 @@ void mission_polling(void){
 						lm35_t.pwm_time=0;
 						lm35_t.cooler_pwm_function =1;
 #else
-						lm35_t.cooler_function=1;
-						cooler_on();
+						lm35_t.cooler_function=1;				
 #endif 
-						
-
+						cooler_on();
 						mission_success_send(COOLER_START);
 				break;
 				
@@ -162,9 +160,7 @@ void mission_polling(void){
 							lm35_t.cooler_pwm_function = COOLER_OFF;				
 #endif 
 							lm35_t.cooler_function=0;
-							
-							lm35_t.close_inter_fan_enable=1;
-							lm35_t.close_inter_fan_time=time+10000;
+
 							cooler_off();
 							mission_success_send(COOLER_STOP);
 				break;
@@ -194,10 +190,11 @@ void mission_polling(void){
 					power_satus=0;
 					//如果之前收到过制冷命令 重新打开制冷
 					if(cooler_received_command)
-					{
+					{			
 						temp_control=1;
 						lm35_t.pwm_time=0;
 						lm35_t.cooler_pwm_function =1;
+						cooler_on();
 						lm35_t.cooler_function = 1;
 					}
 					break;
@@ -245,11 +242,11 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 上传版本号
-					sprintf(version,"1.66L");
+					sprintf(version,"1.67L");
 #if USE_LM35
 					version[4]='L';
 #else
-					version[4]='b';
+					version[4]='B';
 #endif 		
 					action_value_send_none_80((u8 *)version,5,VERSION_UPLOAD);
 				break;

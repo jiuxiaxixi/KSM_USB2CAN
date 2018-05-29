@@ -171,6 +171,7 @@ static void watch_dog_recovery()
 		lm35_t.pwm_time=0;
 		lm35_t.cooler_pwm_function =1;
 		lm35_t.cooler_function = 1;
+		lm35_t.c3_control_cooler=1;
 	}
 	else
 	{

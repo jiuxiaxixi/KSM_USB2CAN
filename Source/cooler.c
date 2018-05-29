@@ -84,6 +84,8 @@ void 	cooler_on(void)
 	GPIO_ResetBits(COOLER_PORT,COOLER_PIN);
 	open_inter_fan();
 	LED_ON(COOLER_LED);
+	lm35_t.c3_control_cooler=1;
+	lm35_t.close_inter_fan_enable=0;
 }
 
 
@@ -99,6 +101,8 @@ void 	cooler_on(void)
 void 	cooler_off(void){   //关闭制冷具体函数
 	  GPIO_SetBits(COOLER_PORT, GPIO_Pin_11);    //关闭制冷片
 		LED_OFF(COOLER_LED);
+		lm35_t.close_inter_fan_enable=1;
+		lm35_t.close_inter_fan_time=time+10000;
 }
 
 /*********************************************************************************************************

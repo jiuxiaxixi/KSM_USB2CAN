@@ -44,6 +44,7 @@
 #include "cooler.h"
 #include "BUZZER.h"
 #include "temp_control.h"	
+#include "coder.h"
 /*********************************************************************************************************
 	全局变量
 *********************************************************************************************************/
@@ -107,7 +108,7 @@ void lm75a_temp_read_polling(void){
 			//处理温度在正常范围内渐变
 	  
 		lm35_t.mission_state=LM35_READ_IDLE;
-		lm35_t.waitime=time+1000;
+		lm35_t.waitime=time+5000;
 	
 		
 		if(lm35_t.temp_real<70)
@@ -131,33 +132,30 @@ void lm75a_temp_read_polling(void){
 #if !USE_LM35
 		if(lm35_t.cooler_function)
 		{    //开关制冷条件
+			PRINTF("C3 loop %d  %d\r\n",lm35_t.cooler_function,lm35_t.temp_real);
 			if(lm35_t.temp_real<flash_get_para(FLASH_C3_ZL_LOW))
 			{
 				//设置时间延时关闭风扇
-				PRINTF("C3关闭温度\r\n");
-				lm35_t.c3_control_cooler = 0;
+				PRINTF("C3关闭温度 %d\r\n",flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_off();
-				lm35_t.close_inter_fan_time=time+CLOSE_INTERFAN_TIME;  //延时60S
-				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
+				lm35_t.c3_control_cooler=0;
 			}
 			
 			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH))
 			{
-				PRINTF("C3开启温度\r\n");
+				PRINTF("C3开启温度 %d\r\n",flash_get_para(FLASH_C3_ZL_HIGH));
 				cooler_on();
-				lm35_t.c3_control_cooler = 1;
 			}
 		}
 		
-		if(lm35_t.c3_control_cooler & lm35_t.cooler_function)
+		if((lm35_t.c3_control_cooler==1) && (lm35_t.cooler_function==1))
 		{
+			PRINTF("C2 loop %d %d %d \r\n",lm35_t.c3_control_cooler, lm35_t.cooler_function,b3470_get_temperature_offset(B3470_C2));
 			if(b3470_get_temperature_offset(B3470_C2)<flash_get_para(FLASH_C2_ZL_LOW))
 			{
 				PRINTF("关闭制冷C2 %d %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW),flash_get_para(FLASH_C2_STOP_TIME)*1000);
 				cooler_off();
 				lm35_t.close_cooler_time = time +flash_get_para(FLASH_C2_STOP_TIME)*1000;
-				lm35_t.close_inter_fan_time=time+CLOSE_INTERFAN_TIME;  //延时60S
-				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
 				lm35_t.close_cooler_enable =1;
 				//设置时间延时关闭风扇
 				
@@ -166,7 +164,6 @@ void lm75a_temp_read_polling(void){
 			{
 				PRINTF("开启制冷C2 %d %d\r\n",b3470_get_temperature_offset(B3470_C2),flash_get_para(FLASH_C3_ZL_LOW));
 				cooler_on();
-				lm35_t.close_inter_fan_enable=0;     //关闭内部风扇标志为不可关
 				lm35_t.close_cooler_enable = 0;
 			}
 		}
@@ -457,7 +454,7 @@ void lm75a_mission_polling(void){
 				break;
 			
 			case	LM75_PENGDING:
-				PRINTF("temp is %d \r\n",lm35_t.temp);
+				
 				if(lm35_t.temp>550)
 				{
 					
@@ -474,14 +471,27 @@ void lm75a_mission_polling(void){
 				temp_frame[0]=0x80;
 				temp_frame[1]=temp_int>>8;
 				temp_frame[2]=temp_int>>0;
-				
-				temp_int=b3470_get_temperature_offset(B3470_C2);			//25.2 >> 252
+#if USE_LM35
+		temp_int=b3470_get_temperature_offset(B3470_C3);			//25.2 >> 252
+#else
+		temp_int=b3470_get_temperature_offset(B3470_C2);			//25.2 >> 252
+#endif			
+				PRINTF("temp is %d %d \r\n",lm35_t.temp,temp_int);
 				
 				temp_frame[3]=temp_int>>8;
 				temp_frame[4]=temp_int>>0;
 				mission_state[TEMP_QUERY]=0x80;
-			
+#if LM35_TEST
+				temp_int=Get_Adc_Average(ADC_Channel_0,100);			//25.2 >> 252
+			  PRINTF("temp is %d \r\n",temp_int);
+				temp_frame[5]=temp_int>>8;
+				temp_frame[6]=temp_int>>0;
+				one_can_frame_send((u8 *)temp_frame,7,TEMP_QUERY);
+#else
 				one_can_frame_send((u8 *)temp_frame,5,TEMP_QUERY);
+#endif 			
+				
+			
 				lm75_status=LM75_IDLE;
 			break;
 			

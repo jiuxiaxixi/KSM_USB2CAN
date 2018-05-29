@@ -12,6 +12,8 @@ extern u32 time;
 //外部中断配置
 void EXTIX_Init(void)
 {
+#if !LM35_TEST
+
 	NVIC_InitTypeDef   NVIC_InitStructure;
 	EXTI_InitTypeDef   EXTI_InitStructure;
 	
@@ -35,8 +37,7 @@ void EXTIX_Init(void)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//使能外部中断通道
   NVIC_Init(&NVIC_InitStructure);//配置
 	
-
-	   
+#endif
 }
 
 

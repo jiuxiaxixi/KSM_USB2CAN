@@ -74,7 +74,7 @@
 #define ZL_WD_L 								45            //制冷关闭温度
 #define USE_LM35 								0							//是否使用LM35 温度传感器  1:LM32 0:B3470
 
-#define CLOSE_INTERFAN_TIME			(10*1000)
+#define CLOSE_INTERFAN_TIME			(10*1000)  //关闭制冷后关闭风扇的等待时间
 
 #define LM35_READ_IDLE					0x00
 #define LM35_READ_START 				0x01

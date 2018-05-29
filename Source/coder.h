@@ -13,6 +13,9 @@
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 	 
 #include "stm32f4xx.h"
+
+#define LM35_TEST 	0
+
 #define ENCLA_PIN               GPIO_Pin_5
 #define ENCLA_GPIO_PORT         GPIOA
 #define ENCLA_GPIO_CLK          RCC_AHB1Periph_GPIOA

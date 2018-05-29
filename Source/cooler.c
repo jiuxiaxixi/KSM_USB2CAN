@@ -207,7 +207,6 @@ void 	cooler_pwm_mission(void)
 				cooler_on();
 				lm35_t.cooler_pwm_function=COOLER_DOWN;
 				lm35_t.cooler_function=1;
-				lm35_t.close_inter_fan_enable = 0;
 				lm35_t.pwm_time=time+flash_get_para(FLASH_LM35_ON_TIME)*1000;
 				break;
 			}
@@ -218,8 +217,6 @@ void 	cooler_pwm_mission(void)
 				{
 				PRINTF("PWM 温度关闭制冷 \r\n");
 			  cooler_off();
-				lm35_t.close_inter_fan_time=time+CLOSE_INTERFAN_TIME;  //延时60S
-				lm35_t.close_inter_fan_enable =1;        //关闭内部风扇标志可用
 				lm35_t.cooler_function=0;
 				lm35_t.cooler_pwm_function=COOLER_UP;
 				lm35_t.pwm_time=time+flash_get_para(FLASH_LM35_OFF_TIME)*1000;

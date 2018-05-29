@@ -370,7 +370,12 @@ int16_t flash_get_para(uint8_t device)
 				return (60);
 			else
 				return fmt.buf[FLASH_LM35_OFF_TIME];					
-			
+		
+		case FLASH_LM35_DIS_OFFSET:
+			if(fmt.buf[FLASH_LM35_DIS_OFFSET] == -1)
+				return -40;
+			else
+				return fmt.buf[FLASH_LM35_DIS_OFFSET];	
 		default:
 			PRINTF("fmt got no para of %d",device);
 			return 0;

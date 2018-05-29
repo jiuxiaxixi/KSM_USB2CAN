@@ -14,6 +14,7 @@ extern  uint8_t USB_Tx_Buffer[];   //·¢»º´æ
 extern  uint8_t USB_Rx_Buffer[];   //ÊÕ»º´æ
 extern __IO uint8_t DeviceConfigured;
 u32 usb_waittime;
+
                                                            //Ö´ÐÐÃüÁî
 u8 usart_state __attribute__((at(0x10000018)));
 char version[6];
@@ -51,6 +52,7 @@ void timer_reset(void){
 
 //ÃüÁîºÅÂÖÑ¯
 void mission_polling(void){
+	iwdg_t *wdg = &_iwdg;
     switch(USB_Rx_Buffer[7]){   //¶Á»º´æÄÚµÄÃüÁîºÅ£¬  µÚ7¸ö×Ö½ÚÊÇÃüÁîºÅ
 			
 				case MOTOR_RESET:            //10 09  ÊÔ¼ÁÅÌ¸´Î»
@@ -65,9 +67,14 @@ void mission_polling(void){
 				case MOTOR_INJECTION:    // 10 0B   ÒÆ¶¯µ½¼Ó×¢
 					if(power_off_state)
 						break;
+					
 					srd.position_to_move=motor_inject_offset_position(USB_Rx_Buffer[8],USB_Rx_Buffer[9],USB_Rx_Buffer[10]);
 					motor.running_state=M_PENDDING;
 					motor.current_mission=MOTOR_INJECTION;
+					if(wdg->is_iwdg_set)
+					{
+						wdg->wdg_motor_mission_set(wdg,&motor);
+					}
 					motor_timer_set();
 				break;
 				
@@ -76,6 +83,10 @@ void mission_polling(void){
 						break;
 					motor.running_state=M_SHOCK_PENDING;
 					motor.current_mission=MOTOR_SHOCKING_START;
+					if(wdg->is_iwdg_set)
+					{
+						wdg->wdg_motor_mission_set(wdg,&motor);
+					}
 					action_success_send();
 				break;
 				
@@ -84,6 +95,10 @@ void mission_polling(void){
 						break;
 					motor.running_state=M_PR_END;
 					motor.current_mission=MOTOR_SHOCKING_STOP;
+					if(wdg->is_iwdg_set)
+					{
+						wdg->wdg_motor_mission_set(wdg,&motor);
+					}
 					motor_timer_set();
 				break;
 				
@@ -93,6 +108,10 @@ void mission_polling(void){
 						srd.position_to_move=MM_position(USB_Rx_Buffer[8]);
 						motor.running_state=M_PENDDING;
 						motor.current_mission=MOTOR_INSTALL;
+						if(wdg->is_iwdg_set)
+						{
+						wdg->wdg_motor_mission_set(wdg,&motor);
+						}					
 						motor_timer_set();
 				break;
 					
@@ -242,7 +261,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.67L");
+					sprintf(version,"1.69L");
 #if USE_LM35
 					version[4]='L';
 #else

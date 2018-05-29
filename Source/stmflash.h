@@ -46,6 +46,7 @@
 #define FLASH_LM35_ZL_LOW		 	 		 19
 #define FLASH_LM35_ON_TIME		 	 	 20
 #define FLASH_LM35_OFF_TIME		 	 	 21
+#define FLASH_LM35_DIS_OFFSET			 22
 
 /*********************************************************************************************************
  硬件相关宏定义

@@ -334,8 +334,13 @@ void temp_display_mission(void){
 		      }
 					
 					LM75t.rank=1;                     //???????????????????????????????????????????  目前由屏幕自己判断
+#if USE_LM35
+					LM75t.Integred=(lm35_t.temp+flash_get_para(FLASH_LM35_DIS_OFFSET))/10;       //温度整数位转换
+				  LM75t.decide=(lm35_t.temp+flash_get_para(FLASH_LM35_DIS_OFFSET))%10;         //温度小数位转换
+#else
 					LM75t.Integred=lm35_t.temp/10;       //温度整数位转换
 				  LM75t.decide=lm35_t.temp%10;         //温度小数位转换
+#endif 
 		      LM75t.mission_state=SCREEN_DIS_QUERY;
 					LM75t.waitime=time+LM75WAITIME;
 					LM75t.index=1;

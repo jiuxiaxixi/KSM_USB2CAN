@@ -74,6 +74,7 @@
 #include "adc.h"
 #include "mission.h"
 #include "tm_stm32f4_watchdog.h"
+#include "wwdg.h"
 /*********************************************************************************************************
 ** 是否启用串口调试功能
 *********************************************************************************************************/
@@ -104,7 +105,6 @@ extern  uint32_t USB_ReceivedCount;
 extern  uint8_t USB_Tx_Buffer[];
 extern  uint8_t USB_Rx_Buffer[];
 extern __IO uint8_t DeviceConfigured;
-extern uint8_t usart_state;
 /*********************************************************************************************************
  看门狗全局变量
 *********************************************************************************************************/
@@ -134,78 +134,14 @@ void usart_debug_mission(void)
 {
 	if(uart_debug_time < time)
 	{
-		//PRINTF("temp = %d \r\n",b3470_get_temperature_offset(B3470_C3));//字符串写入缓存
+		PRINTF("temp = %d \r\n",Get_Adc_v(0));//字符串写入缓存
 		uart_debug_time = time + 300;
 	}
 
 }
 #endif
 
-/*********************************************************************************************************
-** Function name:       watch_dog_recovery
-** Descriptions:        死机后恢复电源和制冷的任务
-** input parameters:    0
-** output parameters:   0
-** Returned value:      0
-** Created by:          张校源
-** Created Date:        2018-05-23
-*********************************************************************************************************/
-static void watch_dog_recovery()
-{
-	if(power_satus)
-	{
-		PRINTF("WDOG 开电 \r\n");
-		power_on();
-		power_off_state=0;
-	}
-	else
-	{
-		PRINTF("WDOG 关电 \r\n");
-		power_off();
-		power_off_state=1;
-	}
-	
-	if(temp_control)
-	{
-		PRINTF("WDOG 开启制冷 \r\n");
-		lm35_t.pwm_time=0;
-		lm35_t.cooler_pwm_function =1;
-		lm35_t.cooler_function = 1;
-		lm35_t.c3_control_cooler=1;
-	}
-	else
-	{
-		PRINTF("WDOG 关闭制冷 \r\n");
-		lm35_t.cooler_pwm_function = COOLER_OFF;
-		lm35_t.cooler_function=0;
-		lm35_t.close_inter_fan_enable=1;
-		lm35_t.close_inter_fan_time=time+10000;
-		cooler_off();
-	}
-	
-	PRINTF("SYSTEM RESET \r\n");
-}
-/*********************************************************************************************************
-** Function name:       system_attribute_init
-** Descriptions:        保存在RAM2中 不初始化的变量在开机的时候进行初始化
-** input parameters:    0
-** output parameters:   0
-** Returned value:      0
-** Created by:          张校源
-** Created Date:        2018-05-23
-*********************************************************************************************************/
-static void system_attribute_init(void)
-{
-  USBRxCanBufferIndex=0;
-	USBRxIndex=0;
 
-	canRxMsgBufferIndex=0;
-	canRxIndex=0;
-	
-	power_satus=1;
-	temp_control=0;
-	usart_state=0;
-}
 
 int main(void) {
 	/* Initialize system */

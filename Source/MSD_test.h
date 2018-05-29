@@ -16,7 +16,7 @@ void motor_timer_set(void);
  u8 motor_timeout_check(void);
 void motor_maintain_polling(void);
 
-typedef struct {
+typedef struct motor_t{
   unsigned char running_state;  //工作状态
   u32  timeout;         				//超时时间
   u32  waittime;								//电平转换时间

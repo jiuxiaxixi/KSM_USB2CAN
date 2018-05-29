@@ -19,6 +19,7 @@
 #include "tm_stm32f4_usart_dma.h"
 #include "can.h"
 #include "cooler.h"
+#include "wwdg.h"
 #define WAITTIME 100
 motor_t motor;
 extern char USART_Buffer[100];
@@ -125,6 +126,7 @@ void motor_reset_new(void){
 
 //µç»ú¸´Î»
 void motor_reset(void){
+	iwdg_t *wdg = &_iwdg;
 			switch(motor.running_state){
 				
 				case M_IDLE:
@@ -200,9 +202,19 @@ void motor_reset(void){
 					power_off_state=0;
 					power_off();
 				}
-						srd.position=0;			
-						action_success_send();
+						srd.position=0;
 						motor_finish();
+				if(wdg->is_iwdg_set)
+				{
+					wdg->wdg_motor_mission_recovery(wdg,&motor);
+				}
+				else
+				{
+					action_success_send();
+					
+				}
+						
+						
 			
 				break;
 					

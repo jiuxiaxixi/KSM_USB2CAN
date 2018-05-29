@@ -35,7 +35,7 @@
 #define LED1_ON_CMD     0x18 //10 18 NN ;NN=01=∫Ïµ∆°¢NN=02=¬Ãµ∆
 #define LED1_OFF_CMD    0x19 //10 19 NN ;NN=01=∫Ïµ∆°¢NN=02=¬Ãµ∆
 #define RESET_SCREEN    0x1A 
-
+#define IWDG_RESET			0X1B
 //∂‡÷°≈‰÷√
 #define CAN_DATA_LENGTH			0x05
 #define CAN_DATE_START_BIT	0x03

@@ -44,6 +44,7 @@
 #include "notification.h"
 #include "cooler.h"
 #include "one_dimension_code.h"
+#include "wwdg.h"
 extern 	u32 usb_waittime;
 void mission_polling(void);
 extern void timer_reset(void);

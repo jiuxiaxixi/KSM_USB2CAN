@@ -61,6 +61,8 @@ void mission_polling(void){
 					motor.current_mission=MOTOR_RESET;
 					motor_timer_set();
 					motor.running_state=M_RESET_START; 
+					if(wdg->is_iwdg_set)
+						wdg->wdg_flag_clear(wdg);
 
 				break;
 				
@@ -261,7 +263,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.69L");
+					sprintf(version,"1.70L");
 #if USE_LM35
 					version[4]='L';
 #else

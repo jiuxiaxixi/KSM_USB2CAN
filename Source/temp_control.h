@@ -102,6 +102,7 @@ typedef struct {
 	u32 waitime;
 	int16_t temp;
 	int16_t temp_real;
+	int16_t temp_cooler;
 	int16_t temp_buffer[10];
 	u8 cooler_function;
 	u8 cooler_pwm_function;

@@ -141,7 +141,7 @@ void lm75a_temp_read_polling(void){
 				lm35_t.c3_control_cooler=0;
 			}
 			
-			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH))
+			if(lm35_t.temp_real>flash_get_para(FLASH_C3_ZL_HIGH) || (time > lm35_t.close_cooler_time))
 			{
 				PRINTF("C3¿ªÆôÎÂ¶È %d\r\n",flash_get_para(FLASH_C3_ZL_HIGH));
 				cooler_on();

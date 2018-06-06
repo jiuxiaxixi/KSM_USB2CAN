@@ -373,7 +373,7 @@ int16_t flash_get_para(uint8_t device)
 		
 		case FLASH_LM35_DIS_OFFSET:
 			if(fmt.buf[FLASH_LM35_DIS_OFFSET] == -1)
-				return -40;
+				return 0;
 			else
 				return fmt.buf[FLASH_LM35_DIS_OFFSET];	
 		default:

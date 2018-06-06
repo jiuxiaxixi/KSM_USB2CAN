@@ -134,7 +134,8 @@ void usart_debug_mission(void)
 {
 	if(uart_debug_time < time)
 	{
-		PRINTF("temp = %d \r\n",Get_Adc_v(0));//字符串写入缓存
+		//PRINTF("temp = %d \r\n",Get_Adc_v(0));//字符串写入缓存
+		PRINTF("CAN 地址 %d %d 时间 %d %d\r\n",USBRxCanBufferIndex,USBRxIndex,time,usb_waittime);
 		uart_debug_time = time + 300;
 	}
 
@@ -197,8 +198,9 @@ int main(void) {
 	}
 	else
 	{
-			system_attribute_init();
+		system_attribute_init();
 		PRINTF("KSM reagent-disk system start!\r\n");
+		
 	}
 			
 	TM_WATCHDOG_Init(TM_WATCHDOG_Timeout_2s);
@@ -302,15 +304,16 @@ int main(void) {
 					parpareUSBframe(canrxbuf);
 					USB_StatusDataSended=0;
 					DCD_EP_Tx(&USB_OTG_dev,CDC_IN_EP,canrxbuf,15);
-					usb_timeout = time + 10; //5ms自动重传
+					usb_timeout = time + 20; //5ms自动重传
 					USB2CAN_STATE = USB_WAIT_ACK;
 					break;
 					
 		case USB_WAIT_ACK:
+			
 			if(time > usb_timeout)
 				 {
 					PRINTF("USB重传超时\r\n");
-					USB2CAN_STATE=USB_SEND_FRAME;
+					USB2CAN_STATE=USB_IDLE;
 					 sendcount++;
 					USB_StatusDataSended=1;
 					break;
@@ -330,11 +333,14 @@ int main(void) {
 			if(USBRxCanBufferIndex!=USBRxIndex){
 				//LED灯提示
 				led_to_notification(LED_CAN_TX);
+				PRINTF("CAN 地址 %d %d 时间 %d %d\r\n",USBRxCanBufferIndex,USBRxIndex,time,usb_waittime);
 					if(time>usb_waittime){
+						PRINTF("CAN 发送 \r\n");
 						CAN_Transmit(CAN1, &USBRxMessage[USBRxIndex]); 
 						USBRxIndex++;
 						//1ms帧间间隔
 						usb_waittime=time+1;
+						
 					}
 					
 			}

@@ -471,8 +471,11 @@ void lm75a_mission_polling(void){
 				break;
 				
 			case LM75_SUCCESS:
+#if USE_LM35
+				temp_int=(lm35_t.temp+flash_get_para(FLASH_LM35_DIS_OFFSET));
+#else
 				temp_int=lm35_t.temp;			//25.2 >> 252
-				
+#endif
 				temp_frame[0]=0x80;
 				temp_frame[1]=temp_int>>8;
 				temp_frame[2]=temp_int>>0;

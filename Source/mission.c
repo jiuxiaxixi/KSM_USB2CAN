@@ -14,10 +14,10 @@ extern  uint8_t USB_Tx_Buffer[];   //发缓存
 extern  uint8_t USB_Rx_Buffer[];   //收缓存
 extern __IO uint8_t DeviceConfigured;
 u32 usb_waittime;
-
+u8 motor_tims=0;
                                                            //执行命令
 u8 usart_state __attribute__((at(0x10000018)));
-char version[6];
+char version[7];
 
 //初始化参数
 void timer_reset(void){
@@ -63,7 +63,7 @@ void mission_polling(void){
 					motor.running_state=M_RESET_START; 
 					if(wdg->is_iwdg_set)
 						wdg->wdg_flag_clear(wdg);
-
+					motor_tims=0;
 				break;
 				
 				case MOTOR_INJECTION:    // 10 0B   移动到加注
@@ -73,10 +73,17 @@ void mission_polling(void){
 					srd.position_to_move=motor_inject_offset_position(USB_Rx_Buffer[8],USB_Rx_Buffer[9],USB_Rx_Buffer[10]);
 					motor.running_state=M_PENDDING;
 					motor.current_mission=MOTOR_INJECTION;
+					motor_tims++;
+					if(motor_tims>4){
+						
+					wdg->wdg_flag_set(wdg);
+					motor_tims=0;
+					}
 					if(wdg->is_iwdg_set)
 					{
 						wdg->wdg_motor_mission_set(wdg,&motor);
 					}
+					
 					motor_timer_set();
 				break;
 				
@@ -101,6 +108,7 @@ void mission_polling(void){
 					{
 						wdg->wdg_motor_mission_set(wdg,&motor);
 					}
+					motor_tims=0;
 					motor_timer_set();
 				break;
 				
@@ -263,13 +271,13 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 上传版本号
-					sprintf(version,"1.72L");
+					sprintf(version,"1.72LF");
 #if USE_LM35
 					version[4]='L';
 #else
 					version[4]='B';
 #endif 		
-					action_value_send_none_80((u8 *)version,5,VERSION_UPLOAD);
+					action_value_send_none_80((u8 *)version,6,VERSION_UPLOAD);
 				break;
 				
 				case STATE_QUERY:

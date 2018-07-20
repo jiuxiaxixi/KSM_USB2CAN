@@ -50,9 +50,9 @@ extern motor_t motor;
 #define MOTOR_TIME_OUT 						20
 
 #define RESET_TIMEOUT 						5500
-#define MOTOR_MOVE_ACC_SPEED			350   //电机加速度
-#define	MOTOR_MOVE_DEL_SPEED			300   //电机减速度
-#define	MOTOR_MOVE_MAX_SPEED			800   //电机最大速度
+#define MOTOR_MOVE_ACC_SPEED			250   //电机加速度
+#define	MOTOR_MOVE_DEL_SPEED			200   //电机减速度
+#define	MOTOR_MOVE_MAX_SPEED			600   //电机最大速度
 #define MOTOR_SPEED 							200	 
 #define MOTOR_HISPEED							700
 #define SHOCKING_SPEED_UP					300

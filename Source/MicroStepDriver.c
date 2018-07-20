@@ -498,16 +498,8 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
 			//	LED_ON(LED_COOLER_PWM);
 				break;
       }
-		/*
-		if(srd.step_delay>srd.min_delay*16)
-			new_step_delay=srd.min_delay*16;
-			*/
-			//break;
 			//失步判断
 		if(srd.accel_count >= 0){
-				//buzzer_mission(MODE_TWO);
-				//失步之后以最小速度前进
-				//new_step_delay=srd.min_delay*32;
 				 new_step_delay =srd.step_delay;
 			break;
       }

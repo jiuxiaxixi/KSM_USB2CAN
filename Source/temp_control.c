@@ -125,7 +125,7 @@ void lm75a_temp_read_polling(void){
 		
 		if(time>lm35_t.close_inter_fan_time && lm35_t.close_inter_fan_enable)   //内部风扇关闭标志 可用  且 时间过了60S   关闭内部风扇
 		{
-			close_inter_fan();
+			//close_inter_fan();
 			lm35_t.close_inter_fan_enable=0;
 		}
 		lm35_t.temp_cooler = b3470_get_temperature_offset(B3470_C2);

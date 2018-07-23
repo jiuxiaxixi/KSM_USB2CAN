@@ -74,7 +74,7 @@ void mission_polling(void){
 					motor.running_state=M_PENDDING;
 					motor.current_mission=MOTOR_INJECTION;
 					motor_tims++;
-					if(motor_tims>4){
+					if(motor_tims>10){
 						
 					wdg->wdg_flag_set(wdg);
 					motor_tims=0;
@@ -234,6 +234,7 @@ void mission_polling(void){
 					power_off_state=0;
 					power_on();
 					//timer_reset();
+					flash_init();
 					mission_success_send(POWER_ON);
 					break;
 				}
@@ -271,7 +272,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.72LF");
+					sprintf(version,"1.75LA");
 #if USE_LM35
 					version[4]='L';
 #else

@@ -436,7 +436,16 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
   switch(srd.run_state) {
     case FINISH:
 			//LED_OFF(LED_COOLER_PWM);
-			MSD_PULSE_TIM->CCER &= ~(1<<12);
+			//MSD_PULSE_TIM->CCER &= ~(1<<12);
+			if(srd.last_pos != TIM3->CNT)
+				srd.last_pos_times=0;
+			
+			if(srd.last_pos == TIM3->CNT)
+				srd.last_pos_times ++;
+			
+			if(srd.last_pos < 4 )
+				break;
+			srd.last_pos = 0;
       step_count = 0;
       rest = 0;
       TIM_Cmd(MSD_PULSE_TIM, DISABLE);
@@ -492,10 +501,10 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
 				MSD_PULSE_TIM->CCER &= ~(1<<12); //禁止输出
         srd.run_state = FINISH;
 				//设置最后一步减速的时间 为FFFF,让电机停止下来再记步数
-				//MSD_PULSE_TIM->CCR4=0xFFFF;
-				//MSD_PULSE_TIM->ARR=0xFFFF;
+
 				new_step_delay=0xFFFF;
 			//	LED_ON(LED_COOLER_PWM);
+				srd.last_pos = TIM3->CNT;
 				break;
       }
 			//失步判断

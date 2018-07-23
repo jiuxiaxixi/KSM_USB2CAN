@@ -73,6 +73,8 @@ typedef struct {
 	u16 position;
 	u16 position_to_move;
 	unsigned char wait_count;
+	u16 last_pos;
+	u16 last_pos_times;
 } speedRampData;
 
 

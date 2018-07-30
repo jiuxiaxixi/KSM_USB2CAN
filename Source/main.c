@@ -153,7 +153,7 @@ int main(void) {
 	//USB初始化
 	USBD_Init(&USB_OTG_dev,USB_OTG_HS_CORE_ID,&USR_desc,&USBD_CDC_cb,&USR_cb);
 	//can初始化
-	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,24,0);//CAN初始化环回模式,波特率125Kbps
+	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_1tq,CAN_BS1_6tq,42,0);//CAN初始化环回模式,波特率125Kbps
 #if USART_DEBUG_ENABLE
 	//串口普通初始化
 	USART_Configuration(9600);

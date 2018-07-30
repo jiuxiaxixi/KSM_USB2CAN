@@ -96,7 +96,7 @@ static void can_rec_index_add(){
 
 
 void poniter_plus_one(u16 * index){
-	if(*index>=CAN_BUFFER_SIZE){
+	if(*index>=CAN_BUFFER_SIZE-1){
 		*index=0;
 	}else{
 		(*index)++;

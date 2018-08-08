@@ -150,6 +150,9 @@ int main(void) {
 	u16 comandbuf[3];			//CAN2USB buffer
 	u8  send_size_buf[2];	
 	u8 	sendcount;
+	u8  last_can_mailbox=CAN_TxStatus_NoMailBox;
+	u8 	can_send_sate=0;
+
 	//USB³õÊ¼»¯
 	USBD_Init(&USB_OTG_dev,USB_OTG_HS_CORE_ID,&USR_desc,&USBD_CDC_cb,&USR_cb);
 	//can³õÊ¼»¯
@@ -248,7 +251,8 @@ int main(void) {
 			{
 			timer_reset();
 			}
-		//Í¨ÐÅ²¿·Ö	
+		//Í¨ÐÅ²¿·
+			
 		switch(USB2CAN_STATE){ 
 		
 		case USB_IDLE:
@@ -326,26 +330,41 @@ int main(void) {
 				sendcount++;
 			  USB2CAN_STATE = USB_SEND_FRAME;
 			break;
-					
+		}
+		
 			
-		}
-			//Èç¹ûÓÐ´ý·¢ËÍµÄÖ¡
-			if(USBRxCanBufferIndex!=USBRxIndex){
-				//LEDµÆÌáÊ¾
-				led_to_notification(LED_CAN_TX);
-				PRINTF("CAN µØÖ· %d %d Ê±¼ä %d %d\r\n",USBRxCanBufferIndex,USBRxIndex,time,usb_waittime);
-					if(time>usb_waittime){
-						PRINTF("CAN ·¢ËÍ \r\n");
-						CAN_Transmit(CAN1, &USBRxMessage[USBRxIndex]); 
-						USBRxIndex++;
-						//1msÖ¡¼ä¼ä¸ô
-						usb_waittime=time+1;
-						
-					}
+		switch(can_send_sate)
+		{
+			
+			case 0:
+				if(USBRxCanBufferIndex!=USBRxIndex)
+					can_send_sate =1;
+				break;
+			case 1:
+				 last_can_mailbox = CAN_Transmit(CAN1, &USBRxMessage[USBRxIndex]);
+				 led_to_notification(LED_CAN_TX);
+				 can_send_sate = 2;
+				 usb_waittime = time+20;
+				 //break;
+			
+			case 2:
+				if(time > usb_waittime)
+				{
+					can_send_sate=1;
+					break;
+				}
 					
-			}
-					
+				if(CAN_TransmitStatus(CAN1, last_can_mailbox) == CAN_TxStatus_Ok)
+				{
+					USBRxIndex++;
+					can_send_sate=0;
+					break;
+				}
+				break;
 		}
+
+		}
+		
 	
 }
 

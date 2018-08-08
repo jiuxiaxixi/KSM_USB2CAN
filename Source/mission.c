@@ -272,7 +272,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.75LA");
+					sprintf(version,"1.76LA");
 #if USE_LM35
 					version[4]='L';
 #else

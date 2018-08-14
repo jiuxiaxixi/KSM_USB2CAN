@@ -20,7 +20,8 @@
 #include "can.h"
 #include "cooler.h"
 #include "wwdg.h"
-#define WAITTIME 100
+#include "MicroStepDriver.h" 
+#define WAITTIME 50
 motor_t motor;
 extern char USART_Buffer[100];
 
@@ -31,7 +32,6 @@ motor.timeout=time+RESET_TIMEOUT;
 
 //检查电机超时 如果超时就返回1 并且重新初始化步进电机
  u8 motor_timeout_check(){
-	 
 	if(time>motor.timeout){
 		srd.run_state=STOP;
 		u8 buf[1]={motor.running_state};
@@ -44,85 +44,42 @@ motor.timeout=time+RESET_TIMEOUT;
 		return 0;
 }
  
-/*
-void motor_reset_new(void){
-	
-	switch(motor.running_state){
-	
-			case M_IDLE:
-				break;
-			case M_RESET_START:
-				if(motor.waittime>time)
-					break;
-				MSD_Move(RESET_STEP,MOTOR_RESET_SPEED,MOTOR_RESET_SPEED,MOTOR_RESET_SPEED);
-				motor_timer_set();
-				motor.running_state=M_RESET_WAIT_STOP;
-				break;
-				//
-			case M_RESET_WAIT_STOP:
-				if(motor_timeout_check())
-										break;
-				//检查电机是否正常停止，如果正常停止，返回失败
-			break;
-			
+void motor_diagnosis_mission(void)
+{
+		iwdg_t *wdg = &_iwdg;
+		
+	  //电机停止之后 
+		if(srd.run_state == STOP)
+		{
+			if(TIM3->CNT!=0)
+			{
+				motor.total_offset+=TIM3->CNT;
+				TIM3->CNT = 0;
+			}
 				
-			case M_RESET_POSITION:
-			
-					if(motor.waittime>time)
-							break;
-					if(coder_init_count==0){
-							motor.running_state=MOTOR_TIME_OUT;
-							break;
-						}				
-						coder_init_count=0;
-						MSD_Move(RESET_OFFSET,MOTOR_RESET_SPEED,MOTOR_RESET_SPEED,MOTOR_RESET_SPEED);
-						motor_timer_set();
-						motor.running_state=M_WAITTING_CODERSTEP;
-							break;
-					
-				case M_WAITTING_CODERSTEP:
-					
-									if(motor_timeout_check())
-										break;
-								
-									if(srd.run_state!=STOP)
-										break;
-									
-									motor.running_state=M_RESET_END;
-									break;
-					
-				case M_RESET_END:
-								//重置位置
-								if(power_off_state){
-									power_off_state=0;
-									power_off();
-								}
-										srd.position=0;			
-										action_success_send();
-										motor_finish();
-							
-								break;
-					
-				case MOTOR_TIME_OUT:
-					
-									if(power_off_state){
-										power_off_state=0;
-										power_off();
-									}
-										action_failed_send();
-										motor_finish();
-									break;
-					
-					default:
-						break;
-	}
+			if(motor.total_offset > 15)
+			{
+				wdg->wdg_flag_set(wdg);
+				motor.total_offset = 0;
+			}
+				
+		}
+		
+		if(motor.running_state == M_IDLE)
+			return;
+		
+		if(srd.run_state!=FINISH)
+			return;
+		
+		if(time<motor.dia_time)
+			return;
+		
+		motor.dia_time = time+1;
 	
+		motor_stop_check();
+		
 	
 }
-
-*/
-
-
 
 //电机复位
 void motor_reset(void){
@@ -244,8 +201,6 @@ void motor_move_polling(void){
 					break;
 				case M_PENDDING:
 					//start the motor
-				if(motor.waittime>time)
-						break;
 					move_to_position(srd.position_to_move);
 					//set timer	
 					motor_finish();

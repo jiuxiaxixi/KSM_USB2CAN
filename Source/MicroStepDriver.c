@@ -18,6 +18,9 @@
 #include "coder.h"
 #include "BUZZER.h"
 #include "notification.h"
+#include "moto_debug.h"
+#include "MSD_test.h"
+#include "wwdg.h"
 #define MAX_COUNT 15000;
 //系统加减速参数
 volatile speedRampData srd;
@@ -245,7 +248,7 @@ void MSD_ENA(FunctionalState NewState)
 
 void MSD_Move(signed int step, unsigned int accel, unsigned int decel, unsigned int speed)   //电机动作
 {
-    
+				
     unsigned int max_s_lim;    //达到最大速度时的步数.
  
     unsigned int accel_lim;    //必须开始减速的步数(如果还没加速到达最大速度时)。
@@ -376,6 +379,44 @@ void MSD_Move(signed int step, unsigned int accel, unsigned int decel, unsigned 
     }
 }
 
+uint8_t is_motor_stop(uint8_t times)
+{
+
+	
+		if(srd.last_pos != TIM3->CNT)
+		{
+				srd.last_pos_times=0;
+				srd.last_pos = TIM3->CNT;
+				return 0;
+		}
+			if(srd.last_pos == TIM3->CNT)
+				srd.last_pos_times ++;
+			
+			if(srd.last_pos_times > times )
+					return 1;
+		
+			return 0;
+}
+
+uint8_t motor_stop_check()
+{
+	int offset =0;
+	if(is_motor_stop(100))
+	{	
+			offset = srd.step_all- get_steps(srd.dir);
+			if(offset > 15 || offset < -15)
+			{
+				upload_step_info(motor.current_mission,get_steps(srd.dir),srd.step_all);
+				TIM3->CNT=0;
+				return -1;
+			}
+			record_position(srd.dir);
+			TIM3->CNT=0;
+			srd.run_state = STOP;	
+	}
+	return 0;
+
+}
 /**
 
   * @brief  根据运动方向判断步进电机的运行位置
@@ -407,7 +448,8 @@ void MSD_StepCounter(signed char inc)   //计步判断位置
   * @retval 无
 
   */
-
+	static unsigned int step = 0;
+	static unsigned int tim = 0;
 void MSD_PULSE_TIM_IRQHandler(void)//产生脉冲定时器的中断响应程序，
 {
   
@@ -416,9 +458,11 @@ void MSD_PULSE_TIM_IRQHandler(void)//产生脉冲定时器的中断响应程序，
   static int last_accel_delay; // 加速过程中最后一次延时.
   
   static unsigned int step_count = 0;  // 移动步数计数器
+
   
   static signed int rest = 0;   // 记录new_step_delay中的余数，提高下一步计算的精度
-
+	step = get_steps(srd.dir);
+	tim = TIM3->CNT;
 if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
 {
     /* Clear MSD_PULSE_TIM Capture Compare1 interrupt pending bit*/
@@ -434,28 +478,8 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
     }
 	*/
   switch(srd.run_state) {
-    case FINISH:
-			//LED_OFF(LED_COOLER_PWM);
-			//MSD_PULSE_TIM->CCER &= ~(1<<12);
-			if(srd.last_pos != TIM3->CNT)
-				srd.last_pos_times=0;
-			
-			if(srd.last_pos == TIM3->CNT)
-				srd.last_pos_times ++;
-			
-			if(srd.last_pos < 4 )
-				break;
-			srd.last_pos = 0;
-      step_count = 0;
-      rest = 0;
-      TIM_Cmd(MSD_PULSE_TIM, DISABLE);
-      status.running = FALSE;
-			srd.run_state = STOP;
-			record_position(srd.dir);
-      break;
 
     case ACCEL:
-      MSD_PULSE_TIM->CCER |= 1<<12; //使能输出
       MSD_StepCounter(srd.dir);
       step_count++;
       srd.accel_count++;
@@ -463,6 +487,7 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
                        + rest)/(4 * srd.accel_count + 1));
       rest = ((2 * (long)srd.step_delay)+rest)%(4 * srd.accel_count + 1);
       //检查是够应该开始减速
+
       if(get_steps(srd.dir)>= srd.decel_start) {
         srd.accel_count = srd.decel_val;
         srd.run_state = DECEL;
@@ -477,7 +502,6 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
       break;
 
     case RUN:
-      MSD_PULSE_TIM->CCER |= 1<<12; //使能输出
       MSD_StepCounter(srd.dir);
       step_count++;
       new_step_delay = srd.min_delay;
@@ -491,20 +515,25 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
       break;
 
     case DECEL:
-
-      MSD_PULSE_TIM->CCER |= 1<<12; //使能输出
       MSD_StepCounter(srd.dir);
       step_count++;
       srd.accel_count++;
 		
 		if(get_steps(srd.dir)>srd.step_all){
-				MSD_PULSE_TIM->CCER &= ~(1<<12); //禁止输出
-        srd.run_state = FINISH;
-				//设置最后一步减速的时间 为FFFF,让电机停止下来再记步数
-
-				new_step_delay=0xFFFF;
-			//	LED_ON(LED_COOLER_PWM);
+				TIM_Cmd(MSD_PULSE_TIM, DISABLE);
+				new_step_delay = srd.step_delay;
+				status.running = FALSE;
+				srd.last_pos_times=0;
 				srd.last_pos = TIM3->CNT;
+				if(get_steps(srd.dir)>CIRCUL_STEP+200)
+				{
+					upload_step_info(motor.current_mission,get_steps(srd.dir),step_count);
+					TIM3->CNT=0;
+					break;
+				}
+				step_count = 0;
+				rest = 0;
+				srd.run_state = FINISH;
 				break;
       }
 			//失步判断
@@ -565,12 +594,18 @@ void record_position(signed char inc){  //记录位置
 	//如果反转
 	if(inc == CCW)
   {
-			srd.position=(CIRCUL_STEP-get_steps(srd.dir))+srd.position-REVERSER_OFFSET;
+			srd.position=(CIRCUL_STEP-get_steps(srd.dir))+srd.position;
   }else{
 		
 	//如果正转
   srd.position+=get_steps(srd.dir);
   }
+	
+	if(srd.last_dir!=srd.dir)
+	{
+		srd.position-=REVERSER_OFFSET;
+		srd.last_dir=srd.dir;
+	}
 	
 	//如果过一圈
 	if(srd.position>CIRCUL_STEP)

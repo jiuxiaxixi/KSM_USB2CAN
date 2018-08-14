@@ -607,6 +607,11 @@
               <FileType>1</FileType>
               <FilePath>..\Source\wwdg.c</FilePath>
             </File>
+            <File>
+              <FileName>moto_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Source\moto_debug.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

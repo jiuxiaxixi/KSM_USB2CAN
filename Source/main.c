@@ -222,7 +222,7 @@ int main(void) {
 			BUZZER_mission_polling();
 		//电机走位任务
 			motor_move_polling();
-
+			motor_diagnosis_mission();
 		//电机复位任务
 			motor_reset();
 		//电机振摇任务
@@ -292,18 +292,15 @@ int main(void) {
 				
 		case USB_SEND_FRAME:
 				//发送成功才进行下一次发送
-
 				 if(USB_StatusDataSended==0)
 					break;
-					
 					//超过帧数停止发送
 					//发送完成之后停止
-					if(sendcount>=send_size_buf[0]){
+					if(sendcount>=send_size_buf[0])
+					{
 						USB2CAN_STATE=USB_IDLE;
 						break;
 					}
-					
-					
 					//把帧装入发送缓存中
 					parpareUSBframe(canrxbuf);
 					USB_StatusDataSended=0;

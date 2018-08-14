@@ -20,10 +20,12 @@ typedef struct motor_t{
   unsigned char running_state;  //工作状态
   u32  timeout;         				//超时时间
   u32  waittime;								//电平转换时间
+	u32		dia_time;
 	u8	 current_mission;
 	u8	 maintain_dir;
 	short int offset[11];
 	u8 	error_state;
+	u16 total_offset;
 }motor_t;
 extern motor_t motor;
 #define M_IDLE								0	
@@ -63,6 +65,6 @@ extern motor_t motor;
 #define MOTOR_RESET_SPEED					300
 #define RESET_OFFSET							-100
 
-
+void motor_diagnosis_mission(void);
 extern motor_t motor;
 #endif	/* __MSD_TEST_H */

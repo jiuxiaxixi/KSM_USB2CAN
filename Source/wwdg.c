@@ -86,6 +86,21 @@ void wdg_motor_mission_set(struct iwdg_t *iwdg,struct motor_t *motor)
 }
 
 /*********************************************************************************************************
+** Function name:       wdg_motor_mission_set
+** Descriptions:        看门狗复位标记
+** input parameters:    
+** output parameters:   0
+** Returned value:      0
+** Created by:          张校源
+** Created Date:        2018-05-29
+*********************************************************************************************************/
+void wdg_motor_mission_backup(struct iwdg_t *iwdg,struct motor_t *motor)
+{
+	iwdg->mission_state = motor->running_state;
+	iwdg->current_mission = motor->current_mission;
+}
+
+/*********************************************************************************************************
 ** Function name:       wdg_motor_mission_recovery
 ** Descriptions:        看门狗复位标记
 ** input parameters:    
@@ -177,7 +192,8 @@ iwdg_t _iwdg={
 wdg_flag_set,
 wdg_flag_clear,
 wdg_motor_mission_set,
-wdg_motor_mission_recovery
+wdg_motor_mission_recovery,
+wdg_motor_mission_backup
 };
 
 /*********************************************************************************************************

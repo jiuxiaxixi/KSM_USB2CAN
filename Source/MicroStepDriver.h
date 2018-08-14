@@ -36,7 +36,7 @@ extern int stepPosition;
 #define RESET_STEP      	CIRCUL_STEP+RESRT_OFFSET
 #define ANGLE_CALC_STEP		CIRCUL_STEP/360
 #define HALF_CIRCUL_STEP 	CIRCUL_STEP/2
-#define REVERSER_OFFSET		0
+#define REVERSER_OFFSET		1
 #define ANGLE_PER_CALC		CIRCUL_STEP*360
 // 数学常数。 用于MSD_Move函数的简化计算
 #define ALPHA (2*3.14159/SPR)                    // 2*pi/spr
@@ -70,6 +70,7 @@ typedef struct {
   //加速或者减速计数器
   signed int accel_count;
 	unsigned int step_all;
+	u8 last_dir;
 	u16 position;
 	u16 position_to_move;
 	unsigned char wait_count;
@@ -132,6 +133,7 @@ void record_steps(signed char inc);
 u16 get_steps(signed char inc);
 void record_position(signed char inc);
 extern volatile speedRampData srd;
+					uint8_t motor_stop_check(void);
 #endif	/* __BSP_ADVANCETIME_H */
 
 

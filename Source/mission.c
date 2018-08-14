@@ -61,6 +61,7 @@ void mission_polling(void){
 					motor.current_mission=MOTOR_RESET;
 					motor_timer_set();
 					motor.running_state=M_RESET_START; 
+					//wdg->wdg_motor_mission_backup(wdg,&motor);
 					if(wdg->is_iwdg_set)
 						wdg->wdg_flag_clear(wdg);
 					motor_tims=0;
@@ -79,6 +80,7 @@ void mission_polling(void){
 					wdg->wdg_flag_set(wdg);
 					motor_tims=0;
 					}
+					wdg->wdg_motor_mission_backup(wdg,&motor);
 					if(wdg->is_iwdg_set)
 					{
 						wdg->wdg_motor_mission_set(wdg,&motor);
@@ -118,6 +120,7 @@ void mission_polling(void){
 						srd.position_to_move=MM_position(USB_Rx_Buffer[8]);
 						motor.running_state=M_PENDDING;
 						motor.current_mission=MOTOR_INSTALL;
+						wdg->wdg_motor_mission_backup(wdg,&motor);
 						if(wdg->is_iwdg_set)
 						{
 						wdg->wdg_motor_mission_set(wdg,&motor);

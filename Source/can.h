@@ -81,6 +81,7 @@ extern CanTxMsg	USBRxMessage[255];
 extern uint8_t USBRxCanBufferIndex;
 extern uint8_t USBRxIndex;
 extern	uint8_t USB2CAN_STATE;
+extern uint8_t 	is_soft_start;
 		#define USB_IDLE 				0x00
 		#define USB_FRAME_GET 	0x01
 		#define USB_SEND_FRAME 	0x02

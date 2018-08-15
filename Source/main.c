@@ -195,7 +195,7 @@ int main(void) {
 	//·äÃùÆ÷³õÊ¼»¯
 	BUZZER_Init();
 	//¿´ÃÅ¹·³õÊ¼»¯
-	if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
+	if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET || is_soft_start == 0xAA)
 	{
 			watch_dog_recovery();
 	}
@@ -205,8 +205,8 @@ int main(void) {
 		PRINTF("KSM reagent-disk system start!\r\n");
 		
 	}
-			
-	TM_WATCHDOG_Init(TM_WATCHDOG_Timeout_2s);
+	
+	TM_WATCHDOG_Init(TM_WATCHDOG_Timeout_32s);
 	
 	
 	while (1) {          //ÎÞÏÞÑ­»·
@@ -249,7 +249,7 @@ int main(void) {
 			//Ê±¼ä¿ì³¬Ê±ÁË ÖØÖÃÊ±¼ä
 			if( time >= 0xEFFFFFFF && USB2CAN_STATE == USB_IDLE && motor.running_state == M_IDLE)
 			{
-			timer_reset();
+				timer_reset();
 			}
 		//Í¨ÐÅ²¿·
 			

@@ -26,6 +26,7 @@ typedef struct motor_t{
 	short int offset[11];
 	u8 	error_state;
 	u16 total_offset;
+	u8 recover_times;
 }motor_t;
 extern motor_t motor;
 #define M_IDLE								0	

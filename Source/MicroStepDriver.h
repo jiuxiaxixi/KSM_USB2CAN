@@ -36,7 +36,7 @@ extern int stepPosition;
 #define RESET_STEP      	CIRCUL_STEP+RESRT_OFFSET
 #define ANGLE_CALC_STEP		CIRCUL_STEP/360
 #define HALF_CIRCUL_STEP 	CIRCUL_STEP/2
-#define REVERSER_OFFSET		1
+#define REVERSER_OFFSET		0
 #define ANGLE_PER_CALC		CIRCUL_STEP*360
 // 数学常数。 用于MSD_Move函数的简化计算
 #define ALPHA (2*3.14159/SPR)                    // 2*pi/spr

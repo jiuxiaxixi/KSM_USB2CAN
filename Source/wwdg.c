@@ -183,6 +183,7 @@ void system_attribute_init(void)
 	power_satus=1;
 	temp_control=0;
 	usart_state=0;
+	is_soft_start = 0xAA;
 }
 
 iwdg_t _iwdg={

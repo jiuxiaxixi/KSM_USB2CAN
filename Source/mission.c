@@ -24,6 +24,7 @@ void timer_reset(void){
 	time=0;
 	motor.timeout=0;
 	motor.waittime=0;
+	motor.dia_time =0;
 	lm35_t.waitime=0;
 	lm35_t.close_inter_fan_time=0;
 	lm35_t.times=0;
@@ -275,7 +276,7 @@ void mission_polling(void){
 				break;
 				
 				case VERSION_UPLOAD:   //10 03 ÉÏ´«°æ±¾ºÅ
-					sprintf(version,"1.76LA");
+					sprintf(version,"1.77LA");
 #if USE_LM35
 					version[4]='L';
 #else

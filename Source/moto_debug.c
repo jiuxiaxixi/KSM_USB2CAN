@@ -47,10 +47,18 @@ void pwm_add(struct motor_para *motor_para)
 void upload_step_info(uint8_t mission,uint16_t step,uint16_t setpcount)
 {
 	iwdg_t *wdg = &_iwdg;
-	wdg->wdg_flag_set(wdg);
 	//wdg->wdg_motor_mission_set(wdg,&motor);
 	motor.running_state = M_RESET_START;
 	motor.current_mission = MOTOR_RESET;
+	
+	motor.recover_times ++;
+	if(motor.recover_times>1)
+	{
+	wdg->wdg_motor_mission_recovery(wdg,&motor);
+	motor.running_state = MOTOR_TIME_OUT;
+	motor.recover_times=0;
+	}
+	wdg->wdg_flag_set(wdg);
 	uint8_t buf[7];
 	int16_t miss_step = setpcount-step;
 	if(miss_step <0 )

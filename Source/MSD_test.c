@@ -57,7 +57,7 @@ void motor_diagnosis_mission(void)
 				TIM3->CNT = 0;
 			}
 				
-			if(motor.total_offset > 15)
+			if(motor.total_offset > 15 && motor.current_mission != MOTOR_INSTALL)
 			{
 				wdg->wdg_flag_set(wdg);
 				motor.total_offset = 0;
@@ -65,14 +65,16 @@ void motor_diagnosis_mission(void)
 				
 		}
 		
-		if(motor.running_state == M_IDLE)
+		if(time<motor.dia_time)
+			return;
+				
+		if(motor.running_state == M_IDLE && motor.running_state == M_RESET_START )
 			return;
 		
 		if(srd.run_state!=FINISH)
 			return;
 		
-		if(time<motor.dia_time)
-			return;
+
 		
 		motor.dia_time = time+1;
 	

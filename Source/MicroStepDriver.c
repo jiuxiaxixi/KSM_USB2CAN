@@ -393,7 +393,11 @@ uint8_t is_motor_stop(uint8_t times)
 				srd.last_pos_times ++;
 			
 			if(srd.last_pos_times > times )
-					return 1;
+			{
+				srd.last_pos_times = 0;
+				return 1;
+			}
+					
 		
 			return 0;
 }
@@ -407,6 +411,7 @@ uint8_t motor_stop_check()
 			if(offset > 15 || offset < -15)
 			{
 				upload_step_info(motor.current_mission,get_steps(srd.dir),srd.step_all);
+				srd.run_state = STOP;
 				TIM3->CNT=0;
 				return -1;
 			}
@@ -525,12 +530,6 @@ if (TIM_GetITStatus(MSD_PULSE_TIM, TIM_IT_Update) != RESET)
 				status.running = FALSE;
 				srd.last_pos_times=0;
 				srd.last_pos = TIM3->CNT;
-				if(get_steps(srd.dir)>CIRCUL_STEP+200)
-				{
-					upload_step_info(motor.current_mission,get_steps(srd.dir),step_count);
-					TIM3->CNT=0;
-					break;
-				}
 				step_count = 0;
 				rest = 0;
 				srd.run_state = FINISH;
